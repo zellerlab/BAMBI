@@ -1,0 +1,40 @@
+# Colours for the tests
+
+# generalized linear models
+lm: "#54585A"
+
+# RNASeq models
+limma: "#9FA3CD"
+
+DESeq2: "#2C23DF"
+edgeR: "#5392FE"
+
+# specifically, confounder-aware models
+ALDEx2: "#A66AE6"
+
+ANCOM: "#F3A1A1"
+ANCOMBC: "#FF5656"
+
+# Microbiome-specific models
+corncob: "#E5920C"
+ZIBSeq: "#A0522D"
+ZINQ: "#FE8116"
+metagenomeSeq: "#FFCF07"
+metagenomeSeq2: "#FFCF07"
+
+# non-parameteric models
+wilcoxon: "#228B22"
+distinct: "#56B782"
+KS: "#7FDB45"
+
+
+
+
+
+
+
+
+
+
+
+
