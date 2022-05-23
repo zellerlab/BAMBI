@@ -1,0 +1,34 @@
+
+# filtering parameters
+ab.cutoff: 1e-04
+prev.cutoff: 0.05
+log.n0: 1e-05
+
+# other parameters for the simulations
+prop.markers: 0.1
+class.balance: 0.5
+
+# abundance scaling
+ab.scale:
+    - 1.0
+    - 1.25
+    - 1.5
+    - 2.0
+    - 5.0
+    - 10.0
+    - 20.0
+# prevalence scaling
+prev.scale:
+    - 0.0
+    - 0.1
+    - 0.2
+    - 0.3
+# size of subsets
+subset_size:
+    - 12
+    - 24
+    - 50
+    - 100
+    - 200
+    - 400
+    - 800
