@@ -1,0 +1,13 @@
+#!/bin/bash
+
+#$ -l m_mem_free=4G
+#$ -cwd
+#$ -j y
+#$ -o /fast/AG_Forslund/Morgan/logfiles/test.${SGE_TASK_ID}.out
+#$ -V
+#$ -N da_test
+
+export SGE_ROOT=/fast/gridengine/uge-8.6.7
+
+Rscript -e 'batchtools::doJobCollection("<%= uri %>")'
+exit 0
