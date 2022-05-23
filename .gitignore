@@ -1,0 +1,15 @@
+.DS_store
+.Rhistory
+.Rbuildignore
+.Rproj.user/
+reality_checks
+reality_checks_registries
+test_results
+test_results_registries
+simulations
+figures/figure_*
+renv/binary/
+renv/cache/
+renv/mran/
+renv/projects
+renv/source/
