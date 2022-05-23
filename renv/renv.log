@@ -1,0 +1,669 @@
+* Initializing project ...
+* Discovering package dependencies ... Done!
+* Copying packages into the cache ... [126/126] Done!
+* Resolving missing dependencies  ... 
+The following package(s) were not installed successfully:
+
+	[SIAMCAT]: package 'SIAMCAT' is not available
+
+You may need to manually download and install these packages.
+
+One or more Bioconductor packages are used in your project,
+but the BiocManager package is not available.
+
+Consider installing BiocManager before snapshot.
+
+The following package(s) have unsatisfied dependencies:
+
+	'here' requires 'rprojroot (>= 2.0.2)', but version '1.3-2' will be snapshotted
+
+Consider updating the required dependencies as appropriate.
+
+The following package(s) will be updated in the lockfile:
+
+# Bioconductor =======================
+- Rhdf5lib       [* -> 1.12.1]
+- rhdf5          [* -> 2.34.0]
+- rhdf5filters   [* -> 1.2.0]
+
+# CRAN ===============================
+- BH             [* -> 1.72.0-3]
+- DBI            [* -> 1.1.0]
+- DT             [* -> 0.13]
+- MASS           [* -> 7.3-51.6]
+- Matrix         [* -> 1.2-18]
+- R6             [* -> 2.4.1]
+- RColorBrewer   [* -> 1.1-2]
+- Rcpp           [* -> 1.0.4.6]
+- askpass        [* -> 1.1]
+- assertthat     [* -> 0.2.1]
+- backports      [* -> 1.1.6]
+- base64enc      [* -> 0.1-3]
+- base64url      [* -> 1.4]
+- batchtools     [* -> 0.9.15]
+- brew           [* -> 1.0-6]
+- broom          [* -> 0.5.6]
+- callr          [* -> 3.4.3]
+- cellranger     [* -> 1.1.0]
+- checkmate      [* -> 2.0.0]
+- cli            [* -> 2.0.2]
+- clipr          [* -> 0.7.0]
+- colorspace     [* -> 1.4-1]
+- commonmark     [* -> 1.7]
+- covr           [* -> 3.5.0]
+- crayon         [* -> 1.3.4]
+- crosstalk      [* -> 1.1.0.1]
+- curl           [* -> 4.3]
+- data.table     [* -> 1.12.8]
+- dbplyr         [* -> 1.4.3]
+- desc           [* -> 1.2.0]
+- devtools       [* -> 2.3.0]
+- digest         [* -> 0.6.25]
+- dplyr          [* -> 0.8.5]
+- ellipsis       [* -> 0.3.0]
+- evaluate       [* -> 0.14]
+- fansi          [* -> 0.4.1]
+- farver         [* -> 2.0.3]
+- forcats        [* -> 0.5.0]
+- fs             [* -> 1.4.1]
+- generics       [* -> 0.0.2]
+- ggplot2        [* -> 3.3.0]
+- gh             [* -> 1.1.0]
+- git2r          [* -> 0.26.1]
+- glue           [* -> 1.4.0]
+- gtable         [* -> 0.3.0]
+- haven          [* -> 2.2.0]
+- here           [* -> 1.0.1]
+- highr          [* -> 0.8]
+- hms            [* -> 0.5.3]
+- htmltools      [* -> 0.4.0]
+- htmlwidgets    [* -> 1.5.1]
+- httr           [* -> 1.4.1]
+- ini            [* -> 0.3.1]
+- isoband        [* -> 0.2.1]
+- jsonlite       [* -> 1.6.1]
+- knitr          [* -> 1.28]
+- labeling       [* -> 0.3]
+- later          [* -> 1.0.0]
+- lattice        [* -> 0.20-41]
+- lazyeval       [* -> 0.2.2]
+- lifecycle      [* -> 0.2.0]
+- lubridate      [* -> 1.7.8]
+- magrittr       [* -> 1.5]
+- markdown       [* -> 1.1]
+- memoise        [* -> 1.1.0]
+- mgcv           [* -> 1.8-31]
+- mime           [* -> 0.9]
+- modelr         [* -> 0.1.6]
+- munsell        [* -> 0.5.0]
+- nlme           [* -> 3.1-147]
+- openssl        [* -> 1.4.1]
+- pillar         [* -> 1.4.3]
+- pkgbuild       [* -> 1.0.7]
+- pkgconfig      [* -> 2.0.3]
+- pkgload        [* -> 1.0.2]
+- plogr          [* -> 0.2.0]
+- plyr           [* -> 1.8.6]
+- praise         [* -> 1.0.0]
+- prettyunits    [* -> 1.1.1]
+- processx       [* -> 3.4.2]
+- progress       [* -> 1.2.2]
+- promises       [* -> 1.1.0]
+- ps             [* -> 1.3.2]
+- purrr          [* -> 0.3.4]
+- rappdirs       [* -> 0.3.1]
+- rcmdcheck      [* -> 1.3.3]
+- readr          [* -> 1.3.1]
+- readxl         [* -> 1.3.1]
+- rematch        [* -> 1.0.1]
+- rematch2       [* -> 2.1.1]
+- remotes        [* -> 2.1.1]
+- renv           [* -> 0.12.5]
+- reprex         [* -> 0.3.0]
+- reshape2       [* -> 1.4.4]
+- rex            [* -> 1.2.0]
+- rlang          [* -> 0.4.5]
+- rmarkdown      [* -> 2.1]
+- roxygen2       [* -> 7.1.0]
+- rprojroot      [* -> 1.3-2]
+- rstudioapi     [* -> 0.11]
+- rversions      [* -> 2.0.1]
+- rvest          [* -> 0.3.5]
+- scales         [* -> 1.1.0]
+- selectr        [* -> 0.4-2]
+- sessioninfo    [* -> 1.1.1]
+- stringi        [* -> 1.4.6]
+- stringr        [* -> 1.4.0]
+- sys            [* -> 3.3]
+- testthat       [* -> 2.3.2]
+- tibble         [* -> 3.0.1]
+- tidyr          [* -> 1.0.2]
+- tidyselect     [* -> 1.0.0]
+- tidyverse      [* -> 1.3.0]
+- tinytex        [* -> 0.22]
+- usethis        [* -> 1.6.1]
+- utf8           [* -> 1.1.4]
+- vctrs          [* -> 0.2.4]
+- viridisLite    [* -> 0.3.0]
+- whisker        [* -> 0.4]
+- withr          [* -> 2.2.0]
+- xfun           [* -> 0.13]
+- xml2           [* -> 1.3.2]
+- xopen          [* -> 1.0.0]
+- yaml           [* -> 2.2.1]
+
+* Lockfile written to '/g/scb2/zeller/essex/BAMBI/renv.lock'.
+* Project '/g/scb2/zeller/essex/BAMBI' loaded. [renv 0.12.5]
+* renv activated -- please restart the R session.
+Warning message:
+failed to determine Bioconductor repositories 
+
+
+> .libPaths()
+[1] "/g/scb2/zeller/essex/BAMBI/renv/library/R-4.0/x86_64-pc-linux-gnu"
+[2] "/tmp/RtmpwoJkgh/renv-system-library"                              
+> renv::update('rlang')
+* Querying repositories for available source packages ... Done!
+* Checking for updated packages ... Done!
+The following package(s) will be updated:
+
+# CRAN ===============================
+- rlang   [0.4.5 -> 0.4.10]
+
+Do you want to proceed? [y/N]: y
+Installing rlang [0.4.10] ...
+	OK [linked cache]
+> renv::snapshot()
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+One or more Bioconductor packages are used in your project,
+but the BiocManager package is not available.
+
+Consider installing BiocManager before snapshot.
+
+The following package(s) have unsatisfied dependencies:
+
+	'here' requires 'rprojroot (>= 2.0.2)', but version '1.3-2' will be snapshotted
+
+Consider updating the required dependencies as appropriate.
+
+Do you want to proceed? [y/N]: n
+* Operation aborted.
+Warning message:
+failed to determine Bioconductor repositories 
+> renv::update()
+Installing BiocManager [1.30.10] ...
+	OK [linked cache]
+* Querying repositories for available source packages ... Done!
+* Checking for updated packages ... Done!
+The following package(s) will be updated:
+
+# CRAN ===============================
+- BH            [1.72.0-3 -> 1.75.0-0]
+- DBI           [1.1.0 -> 1.1.1]
+- DT            [0.13 -> 0.17]
+- KernSmooth    [2.23-17 -> 2.23-18]
+- MASS          [7.3-51.6 -> 7.3-53.1]
+- Matrix        [1.2-18 -> 1.3-2]
+- R6            [2.4.1 -> 2.5.0]
+- Rcpp          [1.0.4.6 -> 1.0.6]
+- backports     [1.1.6 -> 1.2.1]
+- boot          [1.3-25 -> 1.3-27]
+- broom         [0.5.6 -> 0.7.4]
+- callr         [3.4.3 -> 3.5.1]
+- class         [7.3-17 -> 7.3-18]
+- cli           [2.0.2 -> 2.3.0]
+- clipr         [0.7.0 -> 0.7.1]
+- codetools     [0.2-16 -> 0.2-18]
+- colorspace    [1.4-1 -> 2.0-0]
+- covr          [3.5.0 -> 3.5.1]
+- crayon        [1.3.4 -> 1.4.1]
+- crosstalk     [1.1.0.1 -> 1.1.1]
+- data.table    [1.12.8 -> 1.13.6]
+- dbplyr        [1.4.3 -> 2.1.0]
+- devtools      [2.3.0 -> 2.3.2]
+- digest        [0.6.25 -> 0.6.27]
+- dplyr         [0.8.5 -> 1.0.4]
+- ellipsis      [0.3.0 -> 0.3.1]
+- fansi         [0.4.1 -> 0.4.2]
+- forcats       [0.5.0 -> 0.5.1]
+- foreign       [0.8-79 -> 0.8-81]
+- fs            [1.4.1 -> 1.5.0]
+- generics      [0.0.2 -> 0.1.0]
+- ggplot2       [3.3.0 -> 3.3.3]
+- gh            [1.1.0 -> 1.2.0]
+- git2r         [0.26.1 -> 0.28.0]
+- glue          [1.4.0 -> 1.4.2]
+- haven         [2.2.0 -> 2.3.1]
+- hms           [0.5.3 -> 1.0.0]
+- htmltools     [0.4.0 -> 0.5.1.1]
+- htmlwidgets   [1.5.1 -> 1.5.3]
+- httr          [1.4.1 -> 1.4.2]
+- isoband       [0.2.1 -> 0.2.3]
+- jsonlite      [1.6.1 -> 1.7.2]
+- knitr         [1.28 -> 1.31]
+- labeling      [0.3 -> 0.4.2]
+- later         [1.0.0 -> 1.1.0.1]
+- lubridate     [1.7.8 -> 1.7.9.2]
+- magrittr      [1.5 -> 2.0.1]
+- memoise       [1.1.0 -> 2.0.0]
+- mgcv          [1.8-31 -> 1.8-33]
+- mime          [0.9 -> 0.10]
+- modelr        [0.1.6 -> 0.1.8]
+- nlme          [3.1-147 -> 3.1-152]
+- nnet          [7.3-14 -> 7.3-15]
+- openssl       [1.4.1 -> 1.4.3]
+- pillar        [1.4.3 -> 1.4.7]
+- pkgbuild      [1.0.7 -> 1.2.0]
+- pkgload       [1.0.2 -> 1.1.0]
+- processx      [3.4.2 -> 3.4.5]
+- promises      [1.1.0 -> 1.2.0.1]
+- ps            [1.3.2 -> 1.5.0]
+- rappdirs      [0.3.1 -> 0.3.3]
+- readr         [1.3.1 -> 1.4.0]
+- rematch2      [2.1.1 -> 2.1.2]
+- remotes       [2.1.1 -> 2.2.0]
+- reprex        [0.3.0 -> 1.0.0]
+- rmarkdown     [2.1 -> 2.6]
+- roxygen2      [7.1.0 -> 7.1.1]
+- rprojroot     [1.3-2 -> 2.0.2]
+- rstudioapi    [0.11 -> 0.13]
+- rversions     [2.0.1 -> 2.0.2]
+- rvest         [0.3.5 -> 0.3.6]
+- scales        [1.1.0 -> 1.1.1]
+- spatial       [7.3-12 -> 7.3-13]
+- stringi       [1.4.6 -> 1.5.3]
+- survival      [3.1-12 -> 3.2-7]
+- sys           [3.3 -> 3.4]
+- testthat      [2.3.2 -> 3.0.1]
+- tibble        [3.0.1 -> 3.0.6]
+- tidyr         [1.0.2 -> 1.1.2]
+- tidyselect    [1.0.0 -> 1.1.0]
+- tinytex       [0.22 -> 0.29]
+- usethis       [1.6.1 -> 2.0.1]
+- vctrs         [0.2.4 -> 0.3.6]
+- withr         [2.2.0 -> 2.4.1]
+- xfun          [0.13 -> 0.21]
+
+Do you want to proceed? [y/N]: y
+Retrieving 'https://cloud.r-project.org/src/contrib/git2r_0.28.0.tar.gz' ...
+	OK [downloaded 1.2 Mb in 0.2 secs]
+Installing BH [1.75.0-0] ...
+	OK [linked cache]
+Installing DBI [1.1.1] ...
+	OK [linked cache]
+Installing digest [0.6.27] ...
+	OK [linked cache]
+Installing htmltools [0.5.1.1] ...
+	OK [linked cache]
+Installing jsonlite [1.7.2] ...
+	OK [linked cache]
+Installing htmlwidgets [1.5.3] ...
+	OK [linked cache]
+Installing magrittr [2.0.1] ...
+	OK [linked cache]
+Installing R6 [2.5.0] ...
+	OK [linked cache]
+Installing crosstalk [1.1.1] ...
+	OK [linked cache]
+Installing Rcpp [1.0.6] ...
+	OK [linked cache]
+Installing later [1.1.0.1] ...
+	OK [linked cache]
+Installing promises [1.2.0.1] ...
+	OK [linked cache]
+Installing DT [0.17] ...
+	OK [linked cache]
+Installing KernSmooth [2.23-18] ...
+	OK [linked cache]
+Installing MASS [7.3-53.1] ...
+	OK [linked cache]
+Installing Matrix [1.3-2] ...
+	OK [linked cache]
+Installing backports [1.2.1] ...
+	OK [linked cache]
+Installing boot [1.3-27] ...
+	OK [linked cache]
+Installing ellipsis [0.3.1] ...
+	OK [linked cache]
+Installing generics [0.1.0] ...
+	OK [linked cache]
+Installing glue [1.4.2] ...
+	OK [linked cache]
+Installing cli [2.3.0] ...
+	OK [linked cache]
+Installing crayon [1.4.1] ...
+	OK [linked cache]
+Installing fansi [0.4.2] ...
+	OK [linked cache]
+Installing vctrs [0.3.6] ...
+	OK [linked cache]
+Installing pillar [1.4.7] ...
+	OK [linked cache]
+Installing tibble [3.0.6] ...
+	OK [linked cache]
+Installing tidyselect [1.1.0] ...
+	OK [linked cache]
+Installing dplyr [1.0.4] ...
+	OK [linked cache]
+Installing stringi [1.5.3] ...
+	OK [linked cache]
+Installing cpp11 [0.2.6] ...
+	OK [linked cache]
+Installing tidyr [1.1.2] ...
+	OK [linked cache]
+Installing broom [0.7.4] ...
+	OK [linked cache]
+Installing ps [1.5.0] ...
+	OK [linked cache]
+Installing processx [3.4.5] ...
+	OK [linked cache]
+Installing callr [3.5.1] ...
+	OK [linked cache]
+Installing class [7.3-18] ...
+	OK [linked cache]
+Installing clipr [0.7.1] ...
+	OK [linked cache]
+Installing codetools [0.2-18] ...
+	OK [linked cache]
+Installing colorspace [2.0-0] ...
+	OK [linked cache]
+Installing mime [0.10] ...
+	OK [linked cache]
+Installing sys [3.4] ...
+	OK [linked cache]
+Installing openssl [1.4.3] ...
+	OK [linked cache]
+Installing httr [1.4.2] ...
+	OK [linked cache]
+Installing withr [2.4.1] ...
+	OK [linked cache]
+Installing covr [3.5.1] ...
+	OK [linked cache]
+Installing data.table [1.13.6] ...
+	OK [linked cache]
+Installing blob [1.2.1] ...
+	OK [linked cache]
+Installing dbplyr [2.1.0] ...
+	OK [linked cache]
+Installing rprojroot [2.0.2] ...
+	OK [linked cache]
+Installing fastmap [1.1.0] ...
+	OK [linked cache]
+Installing cachem [1.0.4] ...
+	OK [linked cache]
+Installing memoise [2.0.0] ...
+	OK [linked cache]
+Installing pkgbuild [1.2.0] ...
+	OK [linked cache]
+Installing rstudioapi [0.13] ...
+	OK [linked cache]
+Installing pkgload [1.1.0] ...
+	OK [linked cache]
+Installing remotes [2.2.0] ...
+	OK [linked cache]
+Installing xfun [0.21] ...
+	OK [linked cache]
+Installing knitr [1.31] ...
+	OK [linked cache]
+Installing roxygen2 [7.1.1] ...
+	OK [linked cache]
+Installing rversions [2.0.2] ...
+	OK [linked cache]
+Installing brio [1.1.1] ...
+	OK [linked cache]
+Installing diffobj [0.3.3] ...
+	OK [linked cache]
+Installing rematch2 [2.1.2] ...
+	OK [linked cache]
+Installing waldo [0.2.4] ...
+	OK [linked cache]
+Installing testthat [3.0.1] ...
+	OK [linked cache]
+Installing fs [1.5.0] ...
+	OK [linked cache]
+Installing credentials [1.3.0] ...
+	OK [linked cache]
+Installing zip [2.1.1] ...
+	OK [linked cache]
+Installing gert [1.1.0] ...
+	OK [linked cache]
+Installing gitcreds [0.1.1] ...
+	OK [linked cache]
+Installing gh [1.2.0] ...
+	OK [linked cache]
+Installing rappdirs [0.3.3] ...
+	OK [linked cache]
+Installing usethis [2.0.1] ...
+	OK [linked cache]
+Installing devtools [2.3.2] ...
+	OK [linked cache]
+Installing forcats [0.5.1] ...
+	OK [linked cache]
+Installing foreign [0.8-81] ...
+	OK [linked cache]
+Installing isoband [0.2.3] ...
+	OK [linked cache]
+Installing nlme [3.1-152] ...
+	OK [linked cache]
+Installing mgcv [1.8-33] ...
+	OK [linked cache]
+Installing labeling [0.4.2] ...
+	OK [linked cache]
+Installing scales [1.1.1] ...
+	OK [linked cache]
+Installing ggplot2 [3.3.3] ...
+	OK [linked cache]
+Installing git2r [0.28.0] ...
+	OK [built from source]
+Installing hms [1.0.0] ...
+	OK [linked cache]
+Installing readr [1.4.0] ...
+	OK [linked cache]
+Installing haven [2.3.1] ...
+	OK [linked cache]
+Installing lubridate [1.7.9.2] ...
+	OK [linked cache]
+Installing modelr [0.1.8] ...
+	OK [linked cache]
+Installing nnet [7.3-15] ...
+	OK [linked cache]
+Installing tinytex [0.29] ...
+	OK [linked cache]
+Installing rmarkdown [2.6] ...
+	OK [linked cache]
+Installing reprex [1.0.0] ...
+	OK [linked cache]
+Installing rvest [0.3.6] ...
+	OK [linked cache]
+Installing spatial [7.3-13] ...
+	OK [linked cache]
+Installing survival [3.2-7] ...
+	OK [linked cache]
+> renv::snapshot()
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+Warning in Sys.setlocale() :
+  OS reports request to set locale to "" cannot be honored
+The following package(s) will be updated in the lockfile:
+
+# CRAN ===============================
+- BH            [1.72.0-3 -> 1.75.0-0]
+- DBI           [1.1.0 -> 1.1.1]
+- DT            [0.13 -> 0.17]
+- MASS          [7.3-51.6 -> 7.3-53.1]
+- Matrix        [1.2-18 -> 1.3-2]
+- R6            [2.4.1 -> 2.5.0]
+- Rcpp          [1.0.4.6 -> 1.0.6]
+- backports     [1.1.6 -> 1.2.1]
+- broom         [0.5.6 -> 0.7.4]
+- callr         [3.4.3 -> 3.5.1]
+- cli           [2.0.2 -> 2.3.0]
+- clipr         [0.7.0 -> 0.7.1]
+- colorspace    [1.4-1 -> 2.0-0]
+- covr          [3.5.0 -> 3.5.1]
+- crayon        [1.3.4 -> 1.4.1]
+- crosstalk     [1.1.0.1 -> 1.1.1]
+- data.table    [1.12.8 -> 1.13.6]
+- dbplyr        [1.4.3 -> 2.1.0]
+- devtools      [2.3.0 -> 2.3.2]
+- digest        [0.6.25 -> 0.6.27]
+- dplyr         [0.8.5 -> 1.0.4]
+- ellipsis      [0.3.0 -> 0.3.1]
+- fansi         [0.4.1 -> 0.4.2]
+- forcats       [0.5.0 -> 0.5.1]
+- fs            [1.4.1 -> 1.5.0]
+- generics      [0.0.2 -> 0.1.0]
+- ggplot2       [3.3.0 -> 3.3.3]
+- gh            [1.1.0 -> 1.2.0]
+- git2r         [0.26.1 -> *]
+- glue          [1.4.0 -> 1.4.2]
+- haven         [2.2.0 -> 2.3.1]
+- hms           [0.5.3 -> 1.0.0]
+- htmltools     [0.4.0 -> 0.5.1.1]
+- htmlwidgets   [1.5.1 -> 1.5.3]
+- httr          [1.4.1 -> 1.4.2]
+- isoband       [0.2.1 -> 0.2.3]
+- jsonlite      [1.6.1 -> 1.7.2]
+- knitr         [1.28 -> 1.31]
+- labeling      [0.3 -> 0.4.2]
+- later         [1.0.0 -> 1.1.0.1]
+- lubridate     [1.7.8 -> 1.7.9.2]
+- magrittr      [1.5 -> 2.0.1]
+- memoise       [1.1.0 -> 2.0.0]
+- mgcv          [1.8-31 -> 1.8-33]
+- mime          [0.9 -> 0.10]
+- modelr        [0.1.6 -> 0.1.8]
+- nlme          [3.1-147 -> 3.1-152]
+- openssl       [1.4.1 -> 1.4.3]
+- pillar        [1.4.3 -> 1.4.7]
+- pkgbuild      [1.0.7 -> 1.2.0]
+- pkgload       [1.0.2 -> 1.1.0]
+- plogr         [0.2.0 -> *]
+- plyr          [1.8.6 -> *]
+- processx      [3.4.2 -> 3.4.5]
+- promises      [1.1.0 -> 1.2.0.1]
+- ps            [1.3.2 -> 1.5.0]
+- rappdirs      [0.3.1 -> 0.3.3]
+- readr         [1.3.1 -> 1.4.0]
+- rematch2      [2.1.1 -> 2.1.2]
+- remotes       [2.1.1 -> 2.2.0]
+- reprex        [0.3.0 -> 1.0.0]
+- reshape2      [1.4.4 -> *]
+- rlang         [0.4.5 -> 0.4.10]
+- rmarkdown     [2.1 -> 2.6]
+- roxygen2      [7.1.0 -> 7.1.1]
+- rprojroot     [1.3-2 -> 2.0.2]
+- rstudioapi    [0.11 -> 0.13]
+- rversions     [2.0.1 -> 2.0.2]
+- rvest         [0.3.5 -> 0.3.6]
+- scales        [1.1.0 -> 1.1.1]
+- stringi       [1.4.6 -> 1.5.3]
+- sys           [3.3 -> 3.4]
+- testthat      [2.3.2 -> 3.0.1]
+- tibble        [3.0.1 -> 3.0.6]
+- tidyr         [1.0.2 -> 1.1.2]
+- tidyselect    [1.0.0 -> 1.1.0]
+- tinytex       [0.22 -> 0.29]
+- usethis       [1.6.1 -> 2.0.1]
+- vctrs         [0.2.4 -> 0.3.6]
+- withr         [2.2.0 -> 2.4.1]
+- xfun          [0.13 -> 0.21]
+- BiocManager   [* -> 1.30.10]
+- blob          [* -> 1.2.1]
+- brio          [* -> 1.1.1]
+- cachem        [* -> 1.0.4]
+- cpp11         [* -> 0.2.6]
+- credentials   [* -> 1.3.0]
+- diffobj       [* -> 0.3.3]
+- fastmap       [* -> 1.1.0]
+- gert          [* -> 1.1.0]
+- gitcreds      [* -> 0.1.1]
+- waldo         [* -> 0.2.4]
+- zip           [* -> 2.1.1]
