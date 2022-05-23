@@ -1,0 +1,980 @@
+---
+title: "MetaCardis Confounder Analysis"
+date: "Feb 2022"
+output: md_document
+---
+
+## Setup
+
+```{r setup}
+library(here)
+library(tidyverse)
+library(rhdf5)
+library(patchwork)
+library(circlize)
+
+source(here('create_simulations', 'load_metacardis.R'))
+
+sim.patterns <- c('T2D.h5','CCAD.h5','OB.h5','MS.h5')
+sim.files <- dir(here('simulations','conf_real'), full.names = TRUE)
+sim.files <- sim.files[str_detect(sim.files, paste(sim.patterns,
+                                                   collapse = '|'))]
+
+phenotypes <- sim.files %>%
+  str_split('_') %>%
+  map_chr(~ .[6]) %>%
+  str_remove_all('.h5')
+diseases <- set_names(phenotypes, phenotypes)
+
+drugs <- c('metformin','ppi','beta_bl','antibiotics','statine','asa', 'dppiv')
+drugs <- set_names(drugs, drugs)
+```
+
+```{r specific.metacardis.sims}
+spec.sim.file <- here('simulations','conf_real',
+                      'metacardis_species_drugs_T2D.h5')
+t2d.spec.sim <- h5read(spec.sim.file, 'original_data/')
+spec.feat.names <- tibble(original = t2d.spec.sim$feature_names_real,
+                          feat = t2d.spec.sim$feature_names)
+```
+
+```{r real.data.proportions.table}
+## T2D -- 601 -- metformin (75%), antihypertensives (68%), dppiv (48%),
+##               statine (40%), angiotensin anti-hta (33%), beta blockers (29%),
+##               calcium antagonist (29%), sulfonylurea (25%), insulin (22%),
+##               aspirin (19%), PPIs (15%)
+## 37% had abx in past 5 years, with 10% NAs
+diab <- motus.meta %>%
+  filter(Label == 'T2D') %>% 
+  select(-contains('ID'), -Label) %>% 
+  mutate_if(is.factor,~as.numeric(as.character(.))) %>% 
+  summarize_all(sum) %>%
+  gather('drug','n') %>%
+  filter(drug!='Timepoint') %>%
+  arrange(desc(n)) %>%
+  mutate(pct = n/601)
+
+## CCAD -- 168 -- statin (92%), antihypertensives (90%), aspirin (89%),
+##                beta blockers (71%), ACE intake (35%), PPI (35%), 
+##                angiotension anti-hta (26%), calcium antagonist (23%),
+##                metformin (20%)
+## 9.5% had abx in past 5 years, with 2.5% NAs
+heart <- motus.meta %>%
+  filter(Label == 'CCAD') %>% 
+  select(-contains('ID'), -Label) %>% 
+  mutate_if(is.factor,~as.numeric(as.character(.))) %>% 
+  summarize_all(sum) %>%
+  gather('drug','n') %>%
+  filter(drug!='Timepoint') %>%
+  arrange(desc(n)) %>%
+  mutate(pct = n/168)
+
+## OB -- 239 patients -- antihypertensives (46%), angiotension anti-hta (18%),
+##                       ACE inhib (17%), beta blockers (16%), ppi (14%),
+##                       statin (5%), metformin (0%)
+## 23% had abx in past 5 years, 4% NAs
+ob <- motus.meta %>%
+  filter(Label == 'OB') %>% 
+  select(-contains('ID'), -Label) %>% 
+  mutate_if(is.factor,~as.numeric(as.character(.))) %>% 
+  summarize_all(sum) %>%
+  gather('drug','n') %>%
+  filter(drug!='Timepoint') %>%
+  arrange(desc(n)) %>%
+  mutate(pct = n/239)
+
+dd.tbl.wide <- motus.meta %>%
+  select(-contains('ID'), -Timepoint) %>%
+  nest(data = -Label) %>%
+  mutate(n = map_dbl(data, nrow)) %>%
+  mutate(data = map(data, ~ mutate_all(., ~ as.numeric(as.character(.))) %>%
+                      summarize_all(~ sum(., na.rm = TRUE)))) %>%
+  unnest_wider(data) %>%
+  mutate_at(2:(ncol(.)-1), ~ ./n) %>%
+  select(Label, n, everything())
+
+dd.sub <- dd.tbl.wide %>%
+  #filter(Label %in% c('T2D','OB','CCAD','HC')) %>%
+  select(Label, n, asa, ppi, metformin, dppiv, statine, beta_bl,
+         contains('anti'), everything())
+```
+
+## Phi coefficients
+
+```{r phi.function}
+calc.phi <- function(x, y) {
+  
+  if (length(unique(x))<2 | length(unique(y))<2)
+    return(NA)
+  
+  tbl <- table(as.double(x), as.double(y))
+  a <- tbl[1,1]
+  b <- tbl[1,2]
+  c <- tbl[2,1]
+  d <- tbl[2,2]
+  R1 <- as.double(a+b)
+  R2 <- as.double(c+d)
+  C1 <- as.double(a+c)
+  C2 <- as.double(b+d)
+  N <- a+b+c+d
+  
+  # browser()
+  phi <- (a - R1 * C1)/sqrt(R1 * R2 * C1 * C2)
+  phi <- ((a*d)-(b*c))/sqrt(R1 * R2 * C1 * C2)
+}
+```
+
+```{r phi.heatmap.PLOT}
+drugs.ext <- c('asa','dppiv', 'kspdiur','beta_bl',
+               'ace_inhib','diuranse','su')
+names(drugs.ext) <- drugs.ext
+
+# abx.names <- abx.data %>% 
+#   group_by(PatientGroup) %>%
+#   summarize_if(is.double, ~sum(., na.rm=TRUE)) %>% 
+#   filter(PatientGroup <7) %>% 
+#   summarize_if(is.double, mean) %>%
+#   select(-ANTIBIOTICS_TOTAL) %>% 
+#   gather('abx','sum', ) %>% 
+#   arrange(desc(sum)) %>%
+#   slice(1:5) %>%
+#   pull(abx)
+
+# abx <- abx.data %>%
+#   select(SampleID, all_of(abx.names))
+
+meta.tbls <- map(setdiff(levels(motus.meta$Label), 'HC'), function(phen) {
+  motus.meta %>%
+    filter(Label == 'HC' | Label == phen) %>%
+    mutate(Label = ifelse(Label == 'HC', 0, 1)) %>%
+    select(contains('Label'), Sample_ID, c(all_of(drugs), all_of(drugs.ext))) %>%
+    mutate_if(is.factor, ~ as.numeric(as.character(.))) %>%
+    filter(Sample_ID %in% colnames(motus.species)) %>%
+    # left_join(abx, by = c('Sample_ID' = 'SampleID')) %>%
+    select(-Sample_ID) }) %>% 
+  set_names(setdiff(levels(motus.meta$Label), 'HC'))
+
+phis <- meta.tbls %>%
+  map(function(tbl) {
+    map_dfr(tbl, function(col) {
+      map_dfc(tbl, ~ calc.phi(col, .x)) }, .id = 'X') %>%
+      gather('Y.tmp','phi',-X) }) %>%
+  bind_rows(.id = 'disease') %>%
+  # filter(!is.na(phi)) %>%
+  mutate(Y = as_factor(ifelse(Y.tmp == 'Label', disease, Y.tmp))) %>%
+  select(-Y.tmp, -disease)
+  
+phis.plotdat <- phis %>%
+  filter(Y %in% names(meta.tbls) & X != 'Label') %>%
+  mutate(Y = fct_relevel(Y, c('MS','OB','OB_BAR','T2D','CAD',
+                         'CCAD','CCAD_HF','HF'))) %>%
+  mutate(X = fct_relevel(X, c('kspdiur','diuranse','ace_inhib','beta_bl',
+                              'statine','asa',
+                              'ppi',
+                              'su','dppiv','metformin',
+                              'antibiotics'))) 
+
+phis.plotdat %>%
+  ggplot(aes(x=X, y=Y)) +
+  geom_tile(aes(fill=phi)) +
+  rcartocolor::scale_fill_carto_c(palette = 'BrwnYl', limits = c(-0.1,1)) +
+  # geom_text(filter(phis.plotdat, !is.na(phi)),
+  #                  label = round(phis, digits = 2), color = 'white') +
+  ggembl::theme_embl() +
+  theme(axis.ticks = element_blank(),
+        axis.text.x = element_text(angle = -45, hjust = 0, size = 9),
+                  axis.text.y = element_text(size = 9)) +
+  labs(x='', y='')
+```
+
+## Linear modelling and robustness analysis
+
+```{r build.linear.models}
+diseases.tmp <- diseases[-2]
+
+# fn <- here('rmd','metacardis-analysis','model-fits.rds')
+fn <- here('data','model-fits.rds')
+if (file.exists(fn)) {
+  models <- readRDS(fn)
+} else {
+  models <- diseases.tmp %>%
+    map(function(disease) {
+      
+      sim <- h5read(sim.files[which(str_detect(sim.files, disease))],
+                    '/original_data')
+      df.feat <- data.frame(sim$filt_features) %>% t() %>%
+        magrittr::set_colnames(sim$filt_feature_names_real) %>%
+        magrittr::set_rownames(sim$sample_names) #%>% prop.table(1)
+
+      # just label
+      lm.lab <- map(colnames(df.feat), function(x) {
+          d <- data.frame(feat = df.feat[,x],
+                          label = sim$labels) %>%
+            mutate(feat = log(ifelse(feat==0,1,feat)))
+          m <- lm(feat ~ label, data = d)
+          return(m) }) %>%
+        set_names(colnames(df.feat)) 
+      lm.lab.out <- tibble(feat = names(lm.lab), model = lm.lab) %>%
+        add_column(drug = NA, .before = 2)
+
+      # just confounder
+      lm.conf <- drugs %>%
+        map(function(drug) {
+          tryCatch( {
+            sim2 <- h5read(sim.files[which(str_detect(sim.files,
+                                                      disease))], drug)
+            lms <- map(colnames(df.feat), function(x) {
+              idx <- which(sim2$sample_names %in% rownames(df.feat))
+              d <- data.frame(feat = df.feat[idx,x],
+                              conf = sim2$conf_label) %>%
+                mutate(feat = log10(ifelse(feat==0,1,feat)))
+              m <- lm(feat ~ conf, data = d)
+              return(m) }) %>%
+              set_names(colnames(df.feat)) },
+            error = function(e) browser() ) })
+      lm.conf.out <- lm.conf %>%
+        imap(~ tibble(feat = names(.x), !!rlang::sym(.y) := .x)) %>%
+        set_names(NULL) %>%
+        Reduce(function(df1, df2) left_join(df1,df2,by='feat'), .) %>%
+        gather('drug','model',-feat)
+        # reduce(full_join(by = 'name'))
+      
+      # confounder as random effect
+      lme.conf <- drugs %>%
+        map(function(drug) {
+          tryCatch( {
+            sim2 <- h5read(sim.files[which(str_detect(sim.files, 
+                                                      disease))], drug)
+            lms <- map(colnames(df.feat), function(x) {
+              idx <- which(sim2$sample_names %in% rownames(df.feat))
+              d <- data.frame(feat = df.feat[idx,x],
+                              label = sim2$labels,
+                              conf = sim2$conf_label) %>%
+                mutate(feat = log10(ifelse(feat==0,1,feat)))
+              m <- suppressMessages(suppressWarnings(
+                lmerTest::lmer(feat ~ label + (1|conf), data = d) ))
+              # m <- suppressMessages(suppressWarnings(
+              #   lme4::lmer(feat ~ label + (1|conf), data = d) ))
+              return(m) }) %>%
+              set_names(colnames(df.feat)) }, 
+            error = function(e) browser() ) }) 
+      lme.conf.out <- lme.conf %>%
+        imap(~ tibble(feat = names(.x), !!rlang::sym(.y) := .x)) %>%
+        set_names(NULL) %>%
+        Reduce(function(df1, df2) left_join(df1,df2,by='feat'), .) %>%
+        gather('drug','model',-feat)
+      
+      # label as random effect
+      lme.lab <- drugs %>%
+        map(function(drug) {
+          tryCatch( {
+            sim2 <- h5read(sim.files[which(str_detect(sim.files, 
+                                                      disease))], drug)
+            lms <- map(colnames(df.feat), function(x) {
+              idx <- which(sim2$sample_names %in% rownames(df.feat))
+              d <- data.frame(feat = df.feat[idx,x],
+                              label = sim2$labels,
+                              conf = sim2$conf_label) %>%
+                mutate(feat = log10(ifelse(feat==0,1,feat)))
+              m <- suppressMessages(suppressWarnings(
+                lmerTest::lmer(feat ~ conf + (1|label), data = d) ))
+              # m <- lme4::lmer(feat ~ label + (1|conf), data = d)
+              return(m) }) %>%
+              set_names(colnames(df.feat)) }, 
+            error = function(e) browser() ) })
+      lme.lab.out <- lme.lab %>%
+        imap(~ tibble(feat = names(.x), !!rlang::sym(.y) := .x)) %>%
+        set_names(NULL) %>%
+        Reduce(function(df1, df2) left_join(df1,df2,by='feat'), .) %>%
+        gather('drug','model',-feat)
+    
+      return(list('lm.lab' = lm.lab.out, 'lm.conf' = lm.conf.out,
+                  'lme.lab.re' = lme.lab.out, 'lme.conf.re' = lme.conf.out))
+    })
+  saveRDS(models, fn) }
+```
+
+```{r clean.linear.models}
+models.lm.lab <- map(models, ~ magrittr::extract2(., 'lm.lab')) %>%
+  map(~ select(., -drug))
+all.models.tmp <- models %>%
+  map(~ list_modify(., 'lm.lab' = NULL)) %>%
+  map(~ Reduce(function(df1, df2) full_join(df1,df2,by=c('feat','drug')), .)) 
+all.models <- map2(all.models.tmp, models.lm.lab, 
+                   ~ left_join(.x, .y, by = 'feat')) %>%
+  map(~ magrittr::set_names(., c('feat','drug','lm.conf','lm.lab.re',
+                                 'lm.conf.re','lm.lab'))) %>%
+  bind_rows(.id = 'disease') %>%
+  pivot_longer(contains('lm'), 'model','model.obj')
+```
+
+```{r extract.lm.coefficients}
+
+# just label
+# fn <- here('rmd','metacardis-analysis','coef-fits.rds')
+fn <- here('data','coef-fits.rds')
+if (file.exists(fn)) {
+  coefs <- readRDS(fn)
+} else {
+  coefs <- diseases.tmp %>%
+    map(function(disease) {
+      
+      sim <- h5read(sim.files[which(str_detect(sim.files, disease))],
+                    '/original_data')
+      df.feat <- data.frame(sim$filt_features) %>% t() %>%
+        magrittr::set_colnames(sim$filt_feature_names_real) %>%
+        magrittr::set_rownames(sim$sample_names) #%>% prop.table(1)
+
+      # just label
+      lm.lab <- map(colnames(df.feat), function(x) {
+          d <- data.frame(feat = df.feat[,x],
+                          label = sim$labels) %>%
+            mutate(feat = log(ifelse(feat==0,1,feat)))
+          m <- lm(feat ~ label, data = d)
+          return(broom::tidy(m)) }) %>%
+        set_names(colnames(df.feat)) %>%
+        bind_rows(.id = 'feat') 
+
+      # just confounder
+      lm.conf <- drugs %>%
+        map(function(drug) {
+          tryCatch( {
+            sim2 <- h5read(sim.files[which(str_detect(sim.files,
+                                                      disease))], drug)
+            lms <- map(colnames(df.feat), function(x) {
+              idx <- which(sim2$sample_names %in% rownames(df.feat))
+              d <- data.frame(feat = df.feat[idx,x],
+                              conf = sim2$conf_label) %>%
+                mutate(feat = log10(ifelse(feat==0,1,feat)))
+              m <- lm(feat ~ conf, data = d)
+              return(broom::tidy(m)) }) %>%
+              set_names(colnames(df.feat)) %>%
+              bind_rows(.id = 'feat') },
+            error = function(e) browser() ) }) %>%
+        bind_rows(.id = 'drug')
+      
+      # confounder as random effect
+      lme.conf <- drugs %>%
+        map(function(drug) {
+          tryCatch( {
+            sim2 <- h5read(sim.files[which(str_detect(sim.files, 
+                                                      disease))], drug)
+            lms <- map(colnames(df.feat), function(x) {
+              idx <- which(sim2$sample_names %in% rownames(df.feat))
+              d <- data.frame(feat = df.feat[idx,x],
+                              label = sim2$labels,
+                              conf = sim2$conf_label) %>%
+                mutate(feat = log10(ifelse(feat==0,1,feat)))
+              m <- suppressMessages(suppressWarnings(
+                lmerTest::lmer(feat ~ label + (1|conf), data = d) ))
+              # m <- lme4::lmer(feat ~ label + (1|conf), data = d)
+              
+              res <- coefficients(summary(m)) %>%
+                as.data.frame() %>%
+                rownames_to_column('term') %>%
+                as_tibble() %>%
+                select(-df) %>%
+                set_names(c('term','estimate','std.error','statistic','p.value'))
+              return(res) }) %>%
+              set_names(colnames(df.feat)) %>%
+              bind_rows(.id = 'feat') }, 
+            error = function(e) browser() ) }) %>%
+        bind_rows(.id = 'drug')
+      
+      # label as random effect
+      lme.lab <- drugs %>%
+        map(function(drug) {
+          tryCatch( {
+            sim2 <- h5read(sim.files[which(str_detect(sim.files, 
+                                                      disease))], drug)
+            lms <- map(colnames(df.feat), function(x) {
+              idx <- which(sim2$sample_names %in% rownames(df.feat))
+              d <- data.frame(feat = df.feat[idx,x],
+                              label = sim2$labels,
+                              conf = sim2$conf_label) %>%
+                mutate(feat = log10(ifelse(feat==0,1,feat)))
+              m <- suppressMessages(suppressWarnings(
+                lmerTest::lmer(feat ~ conf + (1|label), data = d) ))
+              # m <- lme4::lmer(feat ~ label + (1|conf), data = d)
+              
+              res <- coefficients(summary(m)) %>%
+                as.data.frame() %>%
+                rownames_to_column('term') %>%
+                as_tibble() %>%
+                select(-df) %>%
+                set_names(c('term','estimate','std.error','statistic','p.value'))
+              return(res) }) %>%
+              set_names(colnames(df.feat)) %>%
+              bind_rows(.id = 'feat') }, 
+            error = function(e) browser() ) }) %>%
+        bind_rows(.id = 'drug')
+    
+      return(list('lm.lab' = lm.lab, 'lm.conf' = lm.conf,
+                  'lme.lab.re' = lme.lab, 'lme.conf.re' = lme.conf))
+    })
+  saveRDS(coefs, fn) }
+
+all.coefs <- coefs %>%
+  map_dfr(~ bind_rows(., .id = 'model'), .id = 'disease') %>%
+  mutate(p.value = p.adjust(p.value, method = 'BH'))
+```
+
+```{r classify.lm.features}
+# naive correlation with label
+label.naive <- all.coefs %>%
+  filter(!str_detect(model, 're')) %>%
+  filter(!str_detect(term, 'Intercept')) %>%
+  filter(is.na(drug)) %>%
+  select(disease,drug,feat,term,estimate,p.value) %>%
+  pivot_longer(c('estimate','p.value'), 'stat','value') %>%
+  spread('term','value') %>%
+  rename(label.naive = 'label')
+# naive correlation with confounder (across many drugs)
+conf.naive <- all.coefs %>%
+  filter(!str_detect(model, 're')) %>%
+  filter(!str_detect(term, 'Intercept')) %>%
+  select(disease,drug,feat,term,estimate,p.value) %>%
+  pivot_longer(c('estimate','p.value'), 'stat','value') %>%
+  spread('term','value') %>%
+  filter(is.na(label)) %>%
+  select(-label) %>%
+  rename(conf.naive = 'conf')
+all.naive <- conf.naive %>%
+  left_join(label.naive, by = c('disease','feat','stat')) %>%
+  select(-drug.y) %>%
+  rename(drug = 'drug.x')
+all.corrected <- all.coefs %>%
+  filter(str_detect(model, 're')) %>%
+  filter(!str_detect(term, 'Intercept')) %>%
+  select(disease,drug,feat,term,estimate,p.value) %>%
+  pivot_longer(c('estimate','p.value'), 'stat','value') %>%
+  spread('term','value') %>%
+  # label.corr = conf RE/label FE; conf.corr = label RE/conf FE
+  # .corr = label/conf 'with' correction
+  rename(label.corr = 'label', conf.corr = 'conf')
+all <- all.naive %>%
+  left_join(all.corrected, by = c('disease','drug','feat','stat'))
+change <- all %>%
+  filter(stat == 'p.value') %>%
+  mutate(conf.change = case_when(
+    conf.naive<=0.05&conf.corr>0.05 ~ 'adjusted.nonsig',
+    conf.naive<=0.05&conf.corr<=0.05 ~ 'remain.sig',
+    conf.naive>0.05&conf.corr<=0.05 ~ 'disentangled.sig',
+    conf.naive>0.05&conf.corr>0.05 ~ 'insig')) %>%
+  mutate(label.change = case_when(
+    label.naive<=0.05&label.corr>0.05 ~ 'adjusted.nonsig',
+    label.naive<=0.05&label.corr<=0.05 ~ 'remain.sig',
+    label.naive>0.05&label.corr<=0.05 ~ 'disentangled.sig',
+    label.naive>0.05&label.corr>0.05 ~ 'insig')) %>%
+  mutate(status = case_when(
+    str_detect(conf.change,'disent|remain')&str_detect(
+      label.change,'insig') ~ 'drug.effects',
+    str_detect(conf.change,'disen|remain')&str_detect(
+      label.change,'remain') ~ 'combined.effects',
+    str_detect(conf.change,'disent|remain')&str_detect(
+      label.change,'nonsig') ~ 'drug.confounded',
+    str_detect(conf.change,'insig|nonsig')&str_detect(
+      label.change,'disent|remain') ~ 'biomarker',
+    TRUE ~ 'background' )) %>%
+  select(-stat)
+
+dir <- all %>%
+  filter(stat == 'estimate') %>% 
+  select(-stat) %>%
+  mutate_at(vars(contains(c('.naive','.corr'))), ~ sign(.)) %>%
+  mutate(conf = conf.naive+conf.corr) %>%
+  mutate(label = label.naive+label.corr) %>%
+  # select(-contains(c('.naive','.corr'))) %>%
+  mutate(conf.change = ifelse(conf == 0, 'yes', 'no')) %>%
+  mutate(label.change = ifelse(label == 0, 'yes','no'))
+
+# spurious associations resolved through modeling
+filter(change, status == 'drug.confounded')
+
+# could confound CMD disease-association studies
+filter(change, status == 'drug.effects')
+
+# not super interesting, or?
+filter(change, status == 'combined.effects')
+
+# largest group by far
+filter(change, status == 'biomarker')
+```
+
+### Fig 5a: naive and adjusted model coefficient scatterplots
+
+```{r lm.coefficients.FIG5A.PLOT}
+dd.combis <- c('T2D-metformin','T2D-antibiotics','CCAD-statine','CCAD-ppi')
+dd.combis <- c('T2D-metformin','T2D-statine','T2D-ppi',
+               'CCAD-metformin','CCAD-statine','CCAD-ppi')
+dd.combis <- c('T2D-antibiotics','CCAD-ppi','T2D-metformin')
+# dd.combis <- c('CCAD-beta_bl','CCAD-statine','CCAD-asa')
+
+df.plot <- all %>%
+  mutate(dd.combi = paste0(disease,'-',drug)) %>%
+  filter(dd.combi %in% dd.combis) %>%
+  filter(stat == 'estimate') %>%
+  select(-stat) %>%
+  left_join(select(change, -contains(c('naive','corr'))),
+            by = c('disease','drug','feat')) %>%
+  pivot_longer(cols = c(conf.naive, conf.corr), 
+               names_to = 'conf.type',
+               values_to = 'conf') %>%
+  pivot_longer(cols = c(label.naive, label.corr),
+               names_to = 'label.type',
+               values_to = 'label') %>%
+  mutate_at(vars(conf.type, label.type), 
+            ~ str_remove_all(., 'conf.|label.')) %>%
+  filter(conf.type == label.type) %>%
+  mutate(type = label.type) %>%
+  select(-label.type, -conf.type) %>%
+  mutate(combi = paste0(disease,'-',drug,'-',feat))
+
+all.sig <- all %>%
+  mutate(dd.combi = paste0(disease,'-',drug)) %>%
+  filter(dd.combi %in% dd.combis) %>%
+  filter(stat == 'p.value') %>%
+  select(-stat) %>%
+  left_join(select(change, -contains(c('naive','corr'))),
+            by = c('disease','drug','feat')) %>%
+  pivot_longer(cols = c(conf.naive, conf.corr), 
+               names_to = 'conf.type',
+               values_to = 'conf') %>%
+  pivot_longer(cols = c(label.naive, label.corr),
+               names_to = 'label.type',
+               values_to = 'label') %>%
+  mutate_at(vars(conf.type, label.type), 
+            ~ str_remove_all(., 'conf.|label.')) %>%
+  filter(conf.type == label.type) %>%
+  mutate(type = label.type) %>%
+  select(-label.type, -conf.type) %>%
+  mutate(alt.status = case_when(conf<0.05&label<0.05 ~ 'both.sig',
+                                conf<0.05&label>=0.05 ~ 'conf.sig',
+                                conf>=0.05&label<0.05 ~ 'label.sig',
+                                conf>=0.05&label>=0.05 ~ 'neither.sig')) %>%
+    mutate(combi = paste0(disease,'-',drug,'-',feat))
+
+df.clean <- df.plot %>%
+  left_join(select(all.sig, -conf, -label)) %>%
+  mutate(alt.status = ifelse(alt.status=='both.sig'&type=='naive',
+                             'label.sig',
+                             alt.status)) %>%
+  mutate(alt.status = factor(alt.status, levels = c('label.sig','conf.sig',
+                                                    'both.sig','neither.sig'))) %>%
+  mutate(shape = as_factor(case_when(
+    status == 'background' ~ 'bg',
+    type == 'naive' & str_detect(
+      status,'conf') & alt.status == 'label.sig' ~ 'drug.confounded',
+    type == 'corr' & str_detect(status,'conf') ~ 'drug.confounded',
+    # type == 'corr' & str_detect(label.change,'remain') ~ 'remain.sig',
+    type == 'corr' & status == 'biomarker' ~ 'disease.associated',
+    TRUE ~ 'other')))
+
+pal <- ggthemes::tableau_color_pal('Miller Stone')(10)
+lab.sets <- c('CCAD-statine-Lactococcus_lactis',
+              'CCAD-ppi-Veillonella_dispar',
+              'T2D-metformin-Clostridium_bartlettii',
+              'T2D-antibiotics-Eggerthella_lenta')
+
+main.scatter <- df.clean %>%
+  ggplot(aes(x=label,y=conf)) +
+  geom_abline(slope = 0, intercept = 0, color = 'grey') +
+  geom_vline(xintercept = 0, color = 'grey') +
+  geom_point(data = filter(df.clean, status == 'background'),
+             color = 'grey', alpha = 0.4, size=2) +
+  geom_smooth(method = 'lm', color = pal[8]) +
+  ggpubr::stat_cor(method = 'pearson') +
+  geom_point(data = filter(df.clean, status != 'background'),
+             aes(color = alt.status, fill = alt.status, 
+                 shape = shape), alpha = 0.8, size=2.5) +
+  scale_shape_manual(values = c(21,22,25)) +
+  scale_fill_manual(values = c('neither.sig' = '#c8d0d9',
+                                'label.sig' = pal[1],
+                                'conf.sig' = pal[7],
+                                'both.sig' = pal[5])) +
+  scale_color_manual(values = c('neither.sig' = '#c8d0d9',
+                                'label.sig' = pal[1],
+                                'conf.sig' = pal[7],
+                                'both.sig' = pal[5])) +
+  ggrepel::geom_label_repel(filter(df.clean, combi %in% lab.sets),
+                            mapping = aes(label = feat), size = 9/.pt,
+                            min.segment.length = unit(0, 'lines'), force = 5,
+                            max.overlaps = 50) +
+  facet_grid(rows = vars(factor(type, levels = c('naive','corr'))),
+             cols = vars(factor(dd.combi, levels = dd.combis))) +
+  ggembl::theme_embl() +
+  guides(fill = 'none') +
+  labs(color = 'coeff. significance', 
+       x = 'Disease status regression coefficient',
+       y = 'Drug intake regression coefficient', 
+       shape = 'adj. significance') 
+```
+
+## Fig 5b: naive and adjusted model significance lollipop plots
+
+```{r t2d.lollipop}
+dd.combis <- c('T2D-metformin',
+               'T2D-statine','T2D-dppiv',
+               'T2D-antibiotics')
+
+df.plot <- all %>%
+  mutate(dd.combi = paste0(disease,'-',drug)) %>%
+  filter(dd.combi %in% dd.combis) %>%
+  filter(stat == 'estimate') %>%
+  select(-stat)
+
+all.sig <- all %>%
+  mutate(dd.combi = paste0(disease,'-',drug)) %>%
+  filter(dd.combi %in% dd.combis) %>%
+  filter(stat == 'p.value') %>%
+  select(-stat) %>%
+  rename_if(str_detect(colnames(.), fixed('.naive')), ~ paste0(., '.sig')) %>%
+  rename_if(str_detect(colnames(.), fixed('.corr')), ~ paste0(., '.sig'))
+
+df.clean <- df.plot %>%
+  left_join(all.sig) %>%
+  left_join(select(change, disease, drug, feat, contains('change'), status)) %>%
+  mutate(bio.combi = paste0(feat,'-',drug)) %>%
+  mutate(lab.delta = label.corr-label.naive) %>%
+  mutate(conf.delta = conf.corr-conf.naive) %>%
+  arrange(desc(label.naive.sig)) %>%
+  mutate(bio.combi = as_factor(bio.combi)) %>%
+  mutate_at(vars(conf.naive.sig, conf.corr.sig,
+                 label.naive.sig, label.corr.sig), ~-log10(.)) 
+
+d.rob.subset <- df.clean %>% 
+  filter(disease=='T2D'&label.corr.sig >= 2) %>% 
+  nest(-feat) %>% 
+  mutate(tmp=map_dbl(data,nrow)) %>%
+  arrange(desc(tmp)) %>% 
+  filter(!str_detect(feat,'L2_50')) %>%
+  slice(1:5) %>% 
+  select(-tmp) %>%
+  unnest(data) %>%
+  pull(feat) %>% unique() 
+d.conf.subset <- df.clean %>% 
+  filter(disease=='T2D'&status == 'drug.confounded') %>%
+  filter(!str_detect(feat,'butyrate')) %>%
+  arrange(desc(abs(lab.delta))) %>%
+  pull(feat) %>%
+  as.character() %>%
+  unique() %>%
+  magrittr::extract(c(1:9)) %>%
+  setdiff(c('Haemophilus_parainfluenzae','Coprococcus_comes',
+            'Eubacterium_rectale')) %>%
+  c('Eggerthella_lenta')
+# all.feat <- c(d.rob.subset,d.conf.subset,c.rob.subset,c.conf.subset)
+pal <- ggthemes::tableau_color_pal('Superfishel Stone')(10)
+
+t2d.lolli <- df.clean %>%
+  filter(feat %in% d.rob.subset | feat %in% d.conf.subset) %>%
+  # filter(label.naive.sig != label.corr.sig) %>%
+  # mutate(color = case_when(drug == 'antibiotics' ~ pal[3],
+  #                          drug == 'metformin' ~ pal[2],
+  #                          drug == 'statine' ~ pal[1],
+  #                          drug == 'dppiv' ~ pal[6],
+  #                          drug == 'ppi' ~ pal[7])) %>%
+  ggplot() +
+  geom_hline(yintercept = -log10(0.05), color = 'dark grey') +
+  geom_segment( aes(x=bio.combi, xend=bio.combi, 
+                    y=label.naive.sig, yend=label.corr.sig,
+                    group = feat), color="grey") +
+  geom_point( aes(x=bio.combi, y=label.naive.sig), 
+              color='black',size=2.5, alpha = 0.6) +
+  geom_point( aes(x=bio.combi, y=label.corr.sig, color=drug), size=2.5) +
+  facet_wrap(~ factor(disease, levels = c('CCAD','T2D')), scales = 'free') +
+  ggembl::theme_embl() +
+  # scale_color_manual(values = c(pal[3],pal[6],pal[2],pal[7],pal[1])) +
+  scale_color_manual(values = c(pal[3],pal[6],pal[2],pal[1])) +
+  theme(axis.text.x = element_text(angle = -45, hjust = 0, size = 9),
+        #panel.grid.major.y = element_line(color = 'light grey')
+        axis.ticks.x = element_blank()) +
+  labs(y='-log10(T2D P value)', x='')
+
+```
+
+```{r ccad.lolli}
+dd.combis <- c('CCAD-metformin','CCAD-statine','CCAD-antibiotics',
+               'CCAD-ppi','CCAD-asa','CCAD-beta_bl')
+df.plot <- all %>%
+  mutate(dd.combi = paste0(disease,'-',drug)) %>%
+  filter(dd.combi %in% dd.combis) %>%
+  filter(stat == 'estimate') %>%
+  select(-stat)
+
+all.sig <- all %>%
+  mutate(dd.combi = paste0(disease,'-',drug)) %>%
+  filter(dd.combi %in% dd.combis) %>%
+  filter(stat == 'p.value') %>%
+  select(-stat) %>%
+  rename_if(str_detect(colnames(.), fixed('.naive')), ~ paste0(., '.sig')) %>%
+  rename_if(str_detect(colnames(.), fixed('.corr')), ~ paste0(., '.sig'))
+
+df.clean <- df.plot %>%
+  left_join(all.sig) %>%
+  left_join(select(change, disease, drug, feat, contains('change'), status)) %>%
+  mutate(bio.combi = paste0(feat,'-',drug)) %>%
+  mutate(lab.delta = label.corr-label.naive) %>%
+  mutate(conf.delta = conf.corr-conf.naive) %>%
+  arrange(desc(label.naive.sig)) %>%
+  mutate(bio.combi = as_factor(bio.combi)) %>%
+  mutate_at(vars(conf.naive.sig, conf.corr.sig,
+                 label.naive.sig, label.corr.sig), ~-log10(.)) 
+
+c.rob.subset <- df.clean %>% 
+  filter(disease=='CCAD'&label.corr.sig >= 2) %>% 
+  nest(-feat) %>% 
+  mutate(tmp=map_dbl(data,nrow)) %>%
+  arrange(desc(tmp)) %>% 
+  slice(1:7) %>% 
+  select(-tmp) %>%
+  unnest(data) %>%
+  pull(feat) %>% unique() %>%
+  setdiff(c('Megasphaera_micronuciformis','Acidaminococcus_intestini',
+            'Escherichia_coli')) # %>%
+  # c('Eubacterium_siraeum')
+c.conf.subset <- df.clean %>% 
+  filter(disease=='CCAD'&status == 'drug.confounded') %>%
+  filter(!str_detect(feat,'C150')) %>%
+  arrange(desc(abs(lab.delta))) %>%
+  pull(feat) %>%
+  unique() %>%
+  magrittr::extract(c(1:5)) %>%
+  c('Bacteroides_clarus') %>%
+  setdiff('Clostridium_bolteae')
+
+ccad.lolli <- df.clean %>%
+  filter(feat %in% c.rob.subset | feat %in% c.conf.subset) %>%
+  # filter(label.naive.sig != label.corr.sig) %>%
+    # mutate(color = case_when(drug == 'antibiotics' ~ pal[3],
+    #                        drug == 'metformin' ~ pal[2],
+    #                        drug == 'statine' ~ pal[1],
+    #                        drug == 'asa' ~ pal[4],
+    #                        drug == 'beta_bl' ~ pal[5],
+    #                        drug == 'ppi' ~ pal[7])) %>%
+  ggplot() +
+  geom_hline(yintercept = -log10(0.05), color = 'dark grey') +
+  geom_segment( aes(x=bio.combi, xend=bio.combi, 
+                    y=label.naive.sig, yend=label.corr.sig,
+                    group = feat), color="grey") +
+  geom_point( aes(x=bio.combi, y=label.naive.sig), 
+              color='black',size=2.5, alpha = 0.6) +
+  geom_point( aes(x=bio.combi, y=label.corr.sig, color=drug), size=2.5) +
+  facet_wrap(~ factor(disease, levels = c('CCAD','T2D')), scales = 'free') +
+  ggembl::theme_embl() +
+  scale_color_manual(values = c(pal[3:5],pal[2],pal[7],pal[1])) +
+  theme(axis.text.x = element_text(angle = -45, hjust = 0, size = 9),
+        #panel.grid.major.y = element_line(color = 'light grey')
+        axis.ticks.x = element_blank()) +
+  labs(y='-log10(CCAD P value)', x='')
+```
+
+```{r patchwork.lolli.FIG5B.PLOT}
+(t2d.lolli | ccad.lolli) + plot_layout(guides = "collect")
+```
+
+## Fig 5c: integrating robust subset across metformin and PPI models in T2D
+
+```{r circos.PLOT}
+
+dis <- 'T2D'
+dr <- c('ppi','metformin')
+counts <- change %>%
+  select(-contains(c('.naive','.corr','.change'))) %>%
+  filter(disease == dis & drug %in% dr) %>%
+  select(-disease) %>%
+  count(drug, status) 
+
+cohort.df <- change %>%
+  select(-contains(c('.naive','.corr','.change'))) %>%
+  filter(disease == dis & drug %in% dr) %>%
+  select(-disease)
+
+combos <- counts %>%
+  mutate(tmp = paste0(drug,'-', status))
+
+# number of overlapping features
+m <- matrix(NA, nrow = nrow(combos), ncol = nrow(combos))
+rownames(m) <- combos$tmp
+colnames(m) <- combos$tmp
+
+cohort.all <- cohort.df %>% 
+  left_join(filter(all, stat=='estimate'&disease==dis) %>% 
+              select(-stat))
+
+# make symmetrical matrix (without duplicates/reverse combos)
+for (cn in colnames(m)) {
+  for (rn in rownames(m)) {
+
+    r.drug <- str_split(rn, '-') %>% map_chr(~ head(.,1))
+    c.drug <- str_split(cn, '-') %>% map_chr(~ head(.,1))
+    r.stat <- str_split(rn, '-') %>% map_chr(~ tail(.,1))
+    c.stat <- str_split(cn, '-') %>% map_chr(~ tail(.,1))
+    r.feat <- cohort.all %>%
+      filter(drug == r.drug & status == r.stat) %>% pull(feat)
+    c.feat <- cohort.all %>%
+      filter(drug == c.drug & status == c.stat) %>% pull(feat)
+
+    intersection <- intersect(r.feat, c.feat)
+    
+    if (rn == cn | r.drug == c.drug) m[rn,cn] <- 0
+    # check inverse
+    else if (!is.na(m[cn,rn])) m[rn,cn] <- 0
+    else m[rn,cn] <- length(intersection)
+  }
+}
+
+m.long <- m %>%
+  as.data.frame() %>%
+  rownames_to_column('V1') %>%
+  gather('V2','value',-V1) %>%
+  filter(value != 0)
+
+group <- combos$drug
+names(group) <- combos$tmp
+# group <- factor(group, levels = c('background','biomarker','combined.effects',
+#                                   'drug.effects','drug.confounded'))
+
+pal <- ggthemes::tableau_color_pal('Miller Stone')(10)
+# color by status
+colors.df <- group %>%
+  enframe() %>%
+  mutate(color = case_when(str_detect(name, 'background') ~ 'grey',
+                           str_detect(name, 'biomarker') ~ pal[1],
+                           str_detect(name, 'drug.effects') ~ pal[7],
+                           str_detect(name, 'confound') ~ pal[8],
+                           str_detect(name, 'combined') ~ pal[5]))
+colors <- colors.df$color
+names(colors) <- colors.df$name
+
+# MAIN PLOT
+circos.clear()
+circos.par(cell.padding = c(0, 0, 0, 0), points.overflow.warning = FALSE,
+           clock.wise = TRUE)
+circos.info(plot = TRUE)
+chord <- m.long %>%
+  chordDiagramFromDataFrame(#col = colmat, 
+    grid.col = colors, 
+    group=group, 
+    directional = FALSE, 
+    #big.gap = 15, small.gap = 1,
+    annotationTrack = c("grid", "axis"),
+    annotationTrackHeight = convert_height(c(1,0), "mm"),
+    preAllocateTracks = list(
+        track.height = mm_h(1),
+        track.margin = c(mm_h(1), 0)),
+    link.target.prop = TRUE) 
+
+# give sector drug names
+highlight.sector(names(group)[str_detect(names(group),'metformin')], 
+                 track.index = 1, col = 'black',
+    text = 'T2D and Metformin Associations', 
+    cex = 0.8, text.col = "white", niceFacing = TRUE)
+highlight.sector(names(group)[str_detect(names(group),'ppi')],
+                 track.index = 1, col = 'black',
+    text = 'T2D and PPI Associations', 
+    cex = 0.8, text.col = "white", niceFacing = TRUE)
+
+```
+
+```{r robust.subset.coefficient.barplots}
+
+rob.dis <- change %>%
+  filter(disease == 'T2D') %>%
+  nest(data = -feat) %>%
+  mutate(data = map(data, function(df) {
+  filter(df, (
+    drug=='metformin'&status=='biomarker')|(
+    drug=='ppi'&status=='biomarker'))  })) %>%
+  mutate(tmp = map_dbl(data, nrow)) %>%
+  filter(tmp == 2) %>%
+  select(-tmp) %>%
+  unnest(data) %>%
+  # arrange(feat)
+  arrange(label.corr) %>%
+  pull(feat) %>% unique()
+
+rob.dis <- all %>%
+  filter(disease == 'T2D' & drug == 'ppi' & stat == 'estimate') %>%
+  filter(feat %in% rob.dis)
+
+rob.dis %>%
+  arrange(label.corr) %>%
+  select(feat, label.corr) %>%
+  mutate(bar.color = as.factor(ifelse(label.corr <= 0, 1, 2))) %>%
+  mutate(label.corr = abs(label.corr)) %>%
+  mutate(feat = as_factor(feat)) %>%
+  ggplot(aes(x=feat, y=label.corr)) +
+  geom_col(aes(fill=bar.color), alpha=0.4) +
+  coord_flip() +
+  scale_fill_manual(values = c('grey','black')) +
+  ggembl::theme_publication() +
+  labs(y='adjusted coefficients, absolute values', x='')
+
+met.ppi <- change %>%
+  filter(disease == 'T2D') %>%
+  nest(data = -feat) %>%
+  mutate(data = map(data, function(df) {
+  filter(df, (
+    drug=='metformin'&status=='biomarker')|(
+    drug=='ppi'&str_detect(status,'combined')))  })) %>%
+  mutate(tmp = map_dbl(data, nrow)) %>%
+  filter(tmp == 2) %>%
+  select(-tmp) %>%
+  unnest(data) %>%
+  # arrange(feat)
+  arrange(label.corr) %>%
+  pull(feat) %>% unique()
+
+met.ppi <- all %>%
+  filter(disease == 'T2D' & drug == 'ppi' & stat == 'estimate') %>%
+  filter(feat %in% met.ppi)
+
+met.ppi %>%
+  arrange(label.corr) %>%
+  select(feat, label.corr) %>%
+  mutate(bar.color = as.factor(ifelse(label.corr <= 0, 1, 2))) %>%
+  mutate(label.corr = abs(label.corr)) %>%
+  mutate(feat = as_factor(feat)) %>%
+  ggplot(aes(x=feat, y=label.corr)) +
+  geom_col(aes(fill=bar.color), alpha=0.4) +
+  ylim(c(0,1)) +
+  coord_flip() +
+  scale_fill_manual(values = c('grey','black')) +
+  ggembl::theme_publication() +
+  labs(y='adjusted coefficients, absolute values', x='')
+
+met.conf <- change %>%
+  filter(disease == 'T2D') %>%
+  nest(data = -feat) %>%
+  mutate(data = map(data, function(df) {
+  filter(df, (
+    drug=='metformin'&status=='drug.confounded')|(
+    drug=='ppi'&str_detect(status,'biomarker')))  })) %>%
+  mutate(tmp = map_dbl(data, nrow)) %>%
+  filter(tmp == 2) %>%
+  select(-tmp) %>%
+  unnest(data) %>%
+  # arrange(feat)
+  arrange(label.corr) %>%
+  pull(feat) %>% unique()
+met.conf <- all %>%
+  filter(disease == 'T2D' & drug == 'metformin' & stat == 'estimate') %>%
+  filter(feat %in% met.conf) %>%
+  filter(!str_detect(feat, 'butyrate_producing'))
+
+met.conf %>%
+  arrange(label.corr) %>%
+  select(feat, label.corr) %>%
+  mutate(bar.color = as.factor(ifelse(label.corr <= 0, 1, 2))) %>%
+  mutate(label.corr = abs(label.corr)) %>%
+  mutate(feat = as_factor(feat)) %>%
+  ggplot(aes(x=feat, y=label.corr)) +
+  geom_col(aes(fill=bar.color), alpha=0.4) +
+  ylim(c(0,1)) +
+  coord_flip() +
+  scale_fill_manual(values = c('grey','black')) +
+  ggembl::theme_publication() +
+  labs(y='adjusted coefficients, absolute values', x='')
+
+```
