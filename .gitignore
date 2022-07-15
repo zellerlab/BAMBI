@@ -2,6 +2,7 @@
 .Rhistory
 .Rbuildignore
 .Rproj.user/
+data/
 reality_checks
 reality_checks_registries
 test_results
@@ -12,4 +13,3 @@ renv/binary/
 renv/cache/
 renv/mran/
 renv/projects
-renv/source/
