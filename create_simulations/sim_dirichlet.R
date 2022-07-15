@@ -21,11 +21,14 @@ params <- yaml.load_file(here('create_simulations', "parameters.yaml"))
 
 # parameters
 simulation <- paste0(temp.loc, 'sim_dirichlet.h5')
-sim.method <- 'dirichlet'
+sim.method <- 'dirmult'
 rep <- 10
 
+message(simulation)
+message(sim.method)
+
 # create simulations
-simulate.data(feat = feat.zeevi, meta=meta.zeevi,
+create.data.simulation(feat = feat.zeevi, meta=meta.zeevi,
               sim.location = simulation,
               sim.type='cross-section',
               sim.method=sim.method,

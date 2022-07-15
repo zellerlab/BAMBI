@@ -24,15 +24,18 @@ simulation <- paste0(temp.loc, 'sim_negbin.h5')
 sim.method <- 'negbin'
 rep <- 10
 
+message(simulation)
+message(sim.method)
+
 # create simulations
-simulate.data(feat = feat.zeevi, meta=meta.zeevi,
+create.data.simulation(feat = feat.zeevi, meta=meta.zeevi,
               sim.location = simulation,
               sim.type='cross-section',
               sim.method=sim.method,
               filt.params = list(ab.cutoff=as.numeric(params$ab.cutoff),
                                  prev.cutoff=params$prev.cutoff,
                                  log.n0=as.numeric(params$log.n0)),
-              sim.params = list(ab.scale=params$ab.scale,
+              sim.params = list(ab.scale=params$ab.scale, correlation=FALSE,
                                 prop.markers=params$prop.markers,
                                 class.balance=params$class.balance,
                                 repeats=rep))

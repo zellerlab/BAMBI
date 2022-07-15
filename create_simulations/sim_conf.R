@@ -31,7 +31,7 @@ conf.bias <- 0.5
 simulation <- paste0(temp.loc, 'sim_study_conf')
 
 # create simulations
-simulate.data(feat = list(feat.zeevi, feat.twinsuk),
+create.data.simulation(feat = list(feat.zeevi, feat.twinsuk),
               meta = list(meta.zeevi, meta.twinsuk),
               sim.location = paste0(simulation, '.h5'),
               sim.type='cross-section',
@@ -75,7 +75,7 @@ message("Created confounded test indices for study-conf simulation!")
 simulation <- paste0(temp.loc, 'sim_global_conf')
 
 # create simulations
-simulate.data(feat = feat.zeevi,
+create.data.simulation(feat = feat.zeevi,
               meta = meta.zeevi,
               sim.location = paste0(simulation, '.h5'),
               sim.type='cross-section',
@@ -117,7 +117,7 @@ for (cfp in conf.feat.prop){
     simulation <- paste0(temp.loc, 'sim_artificial_conf_', cfp)
     
     # create simulations
-    simulate.data(feat = feat.zeevi,
+    create.data.simulation(feat = feat.zeevi,
                   meta = meta.zeevi,
                   sim.location = paste0(simulation, '.h5'),
                   sim.type='cross-section',

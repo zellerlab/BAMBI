@@ -27,9 +27,9 @@ simulation <- paste0(temp.loc, 'simulations/sim_')
 
 for (ft in feature.type){
   sim <- paste0(simulation, ft, '.h5')
-  
+  message(sim)
   # create simulations
-  simulate.data(feat = feat.zeevi,
+  create.data.simulation(feat = feat.zeevi,
                 meta = meta.zeevi,
                 sim.location = sim,
                 sim.type='cross-section',
@@ -57,7 +57,7 @@ for (ft in feature.type){
 sim <- paste0(simulation, 'compositional.h5')
 
 # create simulations
-simulate.data(feat = feat.zeevi,
+create.data.simulation(feat = feat.zeevi,
               meta = meta.zeevi,
               sim.location = sim,
               sim.type='cross-section',

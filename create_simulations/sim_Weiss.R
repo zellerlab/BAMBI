@@ -25,7 +25,7 @@ sim.method <- 'Weiss'
 rep <- 10
 
 # create simulations
-simulate.data(feat = feat.zeevi, meta=meta.zeevi,
+create.data.simulation(feat = feat.zeevi, meta=meta.zeevi,
               sim.location = simulation,
               sim.type='cross-section',
               sim.method=sim.method,
