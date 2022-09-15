@@ -20,30 +20,35 @@ devtools::load_all(simba.loc)
 params <- yaml.load_file(here('create_simulations', "parameters.yaml"))
 
 # parameters
-simulation <- paste0(temp.loc, 'sim_dirichlet.h5')
 sim.method <- 'dirmult'
 rep <- 10
 
-message(simulation)
-message(sim.method)
+cat(sim.method)
 
 # create simulations
-create.data.simulation(feat = feat.zeevi, meta=meta.zeevi,
-              sim.location = simulation,
-              sim.type='cross-section',
-              sim.method=sim.method,
-              filt.params = list(ab.cutoff=as.numeric(params$ab.cutoff),
-                                 prev.cutoff=params$prev.cutoff,
-                                 log.n0=as.numeric(params$log.n0)),
-              sim.params = list(ab.scale=params$ab.scale,
-                                prop.markers=params$prop.markers,
-                                class.balance=params$class.balance,
-                                repeats=rep))
+for (i in names(dataset.list)){
+  simulation <- paste0(temp.loc, 'sim_', i, '_dir.h5')
+  create.data.simulation(
+    feat = dataset.list[[i]]$feat, 
+    meta=dataset.list[[i]]$meta,
+    sim.location = simulation,
+    sim.type='cross-section',
+    sim.method=sim.method,
+    filt.params = list(ab.cutoff=ifelse(str_detect(i, 'KEGG'), 1e-07,
+                                        as.numeric(params$ab.cutoff)),
+                       prev.cutoff=params$prev.cutoff,
+                       log.n0=as.numeric(params$log.n0)),
+    sim.params = list(ab.scale=params$ab.scale,
+                      prop.markers=params$prop.markers,
+                      class.balance=params$class.balance,
+                      repeats=rep))
+  
+  # create testing indices
+  create.test.idx(sim.location=simulation,
+                  subsets=params$subset_size,
+                  repetitions=50)
+  
+  # move file to permament place
+  file.move(simulation, here('simulations', 'others'))
+}
 
-# create testing indices
-create.test.idx(sim.location=simulation,
-                subsets=params$subset_size,
-                repetitions=50)
-
-# move file to permament place
-file.move(simulation, here('simulations', 'others'))
