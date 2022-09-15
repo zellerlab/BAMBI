@@ -49,6 +49,7 @@ fn.meta <- here('data', 'meta_Goodrich_2014.tsv')
 meta.goodrich <- read_tsv(fn.meta) %>%
   filter(!is.na(Sample_ID)) %>%
   filter(DiseaseState != 'OB') %>% 
+  select(Sample_ID, age, body_mass_index) %>% 
   as.data.frame()
 rownames(meta.goodrich) <- meta.goodrich$Sample_ID
 meta.goodrich$Individual_ID <- meta.goodrich$Sample_ID
@@ -93,9 +94,9 @@ rownames(meta.mi.16s) <- meta.mi.16s$Sample_ID
 
 dataset.list <- list(
   'Zeevi_WGS'=list('feat'=feat.zeevi, 'meta'=meta.zeevi),
-  'Zeevi_KEGG'=list('feat'=feat.zeevi.kegg, 'meta'=meta.zeevi),
   'Schirmer_WGS'=list('feat'=feat.schirmer, 'meta'=meta.schirmer),
   'TwinsUK_WGS'=list('feat'=feat.xie, 'meta'=meta.xie),
   'TwinsUK_16S'=list('feat'=feat.goodrich, 'meta'=meta.goodrich),
   'MI_WGS'=list('feat'=feat.mi.wgs, 'meta'=meta.mi.wgs),
-  'MI_16S'=list('feat'=feat.mi.16S, 'meta'=meta.mi.16s))
+  'MI_16S'=list('feat'=feat.mi.16S, 'meta'=meta.mi.16s),
+  'Zeevi_KEGG'=list('feat'=feat.zeevi.kegg, 'meta'=meta.zeevi))
