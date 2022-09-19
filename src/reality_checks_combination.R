@@ -42,6 +42,9 @@ groups <- setdiff(temp$name, c('original_data', 'simulation_parameters'))
 
 # load the registry
 job.registry <- paste0(temp.loc, 'reality_checks_registries/', simulation)
+if (!dir.exists(job.registry)){
+  stop("Job registry does not exist!")
+}
 loadRegistry(file.dir=job.registry)
 
 # check that all jobs are done
