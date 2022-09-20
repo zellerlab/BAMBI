@@ -41,7 +41,7 @@ for (i in combinations){
                               studies[2], '.h5')))){next()}
   # create simulations
   create.data.simulation(feat = list(dataset.list[[studies[1]]]$feat, 
-                                     dataset.list[[studies[2]]]$feat, ),
+                                     dataset.list[[studies[2]]]$feat),
                 meta = list(dataset.list[[studies[1]]]$meta, 
                             dataset.list[[studies[2]]]$meta),
                 sim.location = simulation,
@@ -62,13 +62,13 @@ for (i in combinations){
   message("Created study-conf simulation!")
 
   # create normal testing indices
-  create.test.idx(sim.location=paste0(simulation, '.h5'),
+  create.test.idx(sim.location=simulation,
                   subsets=c(50, 100, 200),
                   repetitions=50)
   message("Created norma test indices for study-conf simulation!")
 
   # create resampled test indices
-  create.biased.idx(sim.location=paste0(simulation, '.h5'),
+  create.biased.idx(sim.location=simulation,
                     lab.svar = NULL, meta.svar = NULL, 
                     subsets = c(50, 100, 200, 400),
                     repetitions = 50,
@@ -77,7 +77,7 @@ for (i in combinations){
   message("Created confounded test indices for study-conf simulation!")
 
   # move to permanent place
-  file.move(paste0(sim, '.h5'), here('simulations', 'conf_sim'))
+  file.move(simulation, here('simulations', 'conf_sim'))
 }
 
 
@@ -86,42 +86,42 @@ for (i in combinations){
 # Global confounder
 # simulate and add both sets of test indices
 
-simulation <- paste0(temp.loc, 'sim_global_conf')
+# simulation <- paste0(temp.loc, 'sim_global_conf')
 
 # create simulations
-create.data.simulation(feat = feat.zeevi,
-              meta = meta.zeevi,
-              sim.location = paste0(simulation, '.h5'),
-              sim.type='cross-section',
-              sim.method=sim.method,
-              filt.params = list(ab.cutoff=as.numeric(params$ab.cutoff),
-                                 prev.cutoff=params$prev.cutoff,
-                                 log.n0=as.numeric(params$log.n0)),
-              sim.params = list(ab.scale=params$ab.scale,
-                                prev.scale=params$prev.scale,
-                                prop.markers=params$prop.markers,
-                                class.balance=params$class.balance,
-                                conf='global',
-                                conf.params=list(bias=conf.bias, prop=0.5),
-                                prop.markers=params$prop.markers,
-                                feature.type='all',
-                                repeats=rep))
+# create.data.simulation(feat = feat.zeevi,
+#               meta = meta.zeevi,
+#               sim.location = paste0(simulation, '.h5'),
+#               sim.type='cross-section',
+#               sim.method=sim.method,
+#               filt.params = list(ab.cutoff=as.numeric(params$ab.cutoff),
+#                                  prev.cutoff=params$prev.cutoff,
+#                                  log.n0=as.numeric(params$log.n0)),
+#               sim.params = list(ab.scale=params$ab.scale,
+#                                 prev.scale=params$prev.scale,
+#                                 prop.markers=params$prop.markers,
+#                                 class.balance=params$class.balance,
+#                                 conf='global',
+#                                 conf.params=list(bias=conf.bias, prop=0.5),
+#                                 prop.markers=params$prop.markers,
+#                                 feature.type='all',
+#                                 repeats=rep))
 
 # create normal testing indices
-create.test.idx(sim.location=paste0(simulation, '.h5'),
-                subsets=c(50, 100, 200),
-                repetitions=50)
+# create.test.idx(sim.location=paste0(simulation, '.h5'),
+#                 subsets=c(50, 100, 200),
+#                 repetitions=50)
 
 # create resampled test indices
-create.biased.idx(sim.location=paste0(simulation, '.h5'),
-                  lab.svar = NULL, meta.svar = NULL, 
-                  subsets = c(50, 100, 200, 400),
-                  repetitions = 50,
-                  strat.scheme = 'confounder',
-                  bias=c(0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95))
+# create.biased.idx(sim.location=paste0(simulation, '.h5'),
+#                   lab.svar = NULL, meta.svar = NULL, 
+#                   subsets = c(50, 100, 200, 400),
+#                   repetitions = 50,
+#                   strat.scheme = 'confounder',
+#                   bias=c(0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95))
 
 # move to permanent place
-file.move(paste0(sim, '.h5'), here('simulations', 'conf_sim'))
+# file.move(paste0(sim, '.h5'), here('simulations', 'conf_sim'))
 
 # ##############################################################################
 # Artificial confounder
@@ -157,12 +157,12 @@ for (cfp in conf.feat.prop){
                                       repeats=rep))
     
       # create normal testing indices
-      create.test.idx(sim.location=paste0(simulation, '.h5'),
+      create.test.idx(sim.location=simulation,
                       subsets=c(50, 100, 200),
                       repetitions=50)
     
       # create resampled test indices
-      create.biased.idx(sim.location=paste0(simulation, '.h5'),
+      create.biased.idx(sim.location=simulation,
                         lab.svar = NULL, meta.svar = NULL, 
                         subsets = c(50, 100, 200, 400),
                         repetitions = 50,
@@ -170,6 +170,6 @@ for (cfp in conf.feat.prop){
                         bias=c(0.5, 0.6, 0.7, 0.8, 0.9))
       
       # move to permanent place
-      file.move(paste0(sim, '.h5'), here('simulations', 'conf_sim'))
+      file.move(simulation, here('simulations', 'conf_sim'))
   }
 }
