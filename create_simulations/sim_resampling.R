@@ -29,7 +29,7 @@ for (ft in feature.type){
   sim <- paste0(simulation, ft, '.h5')
   message(sim)
   if (file.exists(here('simulations', 'resampling', 
-                       paste0('sim_Zeevi_WGS_', i, '.h5')))){next()}
+                       paste0('sim_Zeevi_WGS_', ft, '.h5')))){next()}
   # create simulations
   create.data.simulation(feat = feat.zeevi,
                 meta = meta.zeevi,
@@ -88,8 +88,8 @@ for (i in names(dataset.list)[-1]){
                        paste0('sim_', i, '_all.h5')))){next()}
   # create simulations
   create.data.simulation(
-    feat = data.list[[i]]$feat,
-    meta = data.list[[i]]$meta,
+    feat = dataset.list[[i]]$feat,
+    meta = dataset.list[[i]]$meta,
     sim.location = sim,
     sim.type='cross-section',
     sim.method='resampling',
