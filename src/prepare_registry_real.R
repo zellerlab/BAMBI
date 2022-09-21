@@ -1,152 +1,117 @@
 # ##############################################################################
 #
-## Run tests for metacardis data with various drugs -- figure 4
+## Run tests for real CRC and CD data
 #
 # ##############################################################################
 
-library(tidyverse)
-library(batchtools)
-library(here)
+library("tidyverse")
+library("batchtools")
+library("here")
 
 # load SIMBA
+args <- commandArgs(trailingOnly = TRUE)
+disease <- args[1]
+stopifnot(disease %in% c('CRC', 'CD'))
 devtools::load_all(simba.loc)
 
-args <- commandArgs(trailingOnly = TRUE)
-folder <- args[1]
-sim.pattern <- args[2]
-test <- args[3]
-
-if (!is.na(sim.pattern)){
-  message("Taking simulation files with pattern: ", sim.pattern)
-} else { 
-  message("Taking all files in ", folder)
-  list.files(here('simulations', folder)) }
-
-if (!is.na(test)){
-  message("Submitting jobs for the test: ", test)
-} else { message("Submitting all different tests!") }
-
-sim.files <- dir(here('simulations', folder), pattern = sim.pattern, 
-                 full.names = TRUE)
-# only works for 'pooled' sims currently
-sim.names <- sim.files %>%
-  str_split('_') %>%
-  map_chr(~ magrittr::extract(., 5))
-
-# HPC - jakob
-
-# local - morgan
-# job.registry <- here('test_results_registries',
-#                      paste0(folder, '_test'))
-# HPC - morgan
-job.registry <- paste0('/scratch/essex/test_results_registries/',
-                       folder, '_test')
-message(job.registry)
-
+tests <- c('ANCOM', 'ANCOMBC', 'corncob', 'ZIBSeq', 'ZIBSeq-sqrt', 'DESeq2',
+           'edgeR', 'metagenomeSeq', 'metagenomeSeq2', 'lm', 'wilcoxon',
+           'limma', 'distinct', 'ZINQ', 'KS', 'ALDEx2')
+if (!dir.exists(paste0(temp.loc, 'test_results_registries/'))){
+  dir.create(paste0(temp.loc, 'test_results_registries/'))
+}
+job.registry <- paste0(temp.loc, 'test_results_registries/real_data_', disease)
 if (!dir.exists(job.registry)) {
-  reg <- makeExperimentRegistry(file.dir = job.registry,
+  reg <- makeRegistry(file.dir = job.registry, 
                                 work.dir = here(),
                                 conf.file = here('cluster_config',
                                                  'batchtools_test_conf.R'),
-                                make.default = TRUE)
+                                make.default = TRUE) 
 } else {
-  reg <- loadRegistry(file.dir = job.registry,
-                      conf.file = here('cluster_config',
-                                       'batchtools_test_conf.R'),
-                      writeable = TRUE)
+  stop("Registry already exists!")
 }
 
-print(getStatus())
-errs <- findErrors()
-if (nrow(errs) > 0){
-  resetJobs(errs)
-  print(getStatus())
-}
+meta <- read_tsv(here('data', paste0('meta_', tolower(disease),'.tsv')))
 
-# add the simulations
-for (sim.file in sim.files) {
-  sim.name <- str_split(sim.file, '_') %>%
-    map_chr(~ magrittr::extract(., 5)) %>%
-    str_remove_all('.h5')
-  addProblem(name = sim.name,
-             data = here('simulations', folder, sim.file),
-             fun = function(data, job) data,
-             reg = reg) }
-
-# updated algorithm to first check if confounder-aware test
-.f_apply <- function(data, job, instance, group, type, 
-                     subsets, norm, test, ...){
-  if (grepl(test, pattern='_conf')){
-    apply.test(sim.location = data,
-               group=group,
-               type=type,
-               subset=subsets,
-               norm=norm,
-               test=gsub(x=test, pattern='_conf', replacement=''),
-               conf='conf')
+# make a function to run a single test on a single/multiple datasets
+.f <- function(test, studies, disease, simba.loc){
+  # load SIMBA
+  library("tidyverse")
+  devtools::load_all(simba.loc)
+  message(test)
+  message(disease)
+  message(studies)
+  if (disease=='CRC'){
+    meta <- read_tsv(here('data', 'meta_crc.tsv'))
+    feat <- read.table(here('data', 'motus_crc_rel_meta.tsv'), sep='\t',
+                           stringsAsFactors = FALSE, check.names = FALSE, 
+                           quote = '', comment.char = '')
+    feat <- as.matrix(feat)
+    feat.count <- read.table(here('data', 'motus_crc_meta.tsv'), sep='\t',
+                                 stringsAsFactors = FALSE, check.names = FALSE, 
+                                 quote = '', comment.char = '')
+    feat.count <- as.matrix(feat.count[rownames(feat),])
+    feat.log <- log10(feat + 1e-05)
+  } else if (disease=='CD'){
+    meta <- read_tsv(here('data', 'meta_cd.tsv'))
+    feat <- read.table(here('data', 'motus_cd_rel_meta.tsv'), sep='\t',
+                       stringsAsFactors = FALSE, check.names = FALSE, 
+                       quote = '', comment.char = '')
+    feat <- as.matrix(feat)
+    feat.count <- read.table(here('data', 'motus_cd_meta.tsv'), sep='\t',
+                             stringsAsFactors = FALSE, check.names = FALSE, 
+                             quote = '', comment.char = '')
+    feat.count <- as.matrix(feat.count[rownames(feat),])
+    feat.log <- log10(feat + 1e-05)
   } else {
-    apply.test(sim.location = data,
-               group=group,
-               type=type,
-               subset=subsets,
-               norm=norm,
-               test=test)
+    stop("Unknown disease")
   }
+  included.studies <- unique(meta$Study)
+  studies <- as.logical(as.numeric(strsplit(studies, split = '')[[1]]))
+  included.studies <- included.studies[studies]
+  meta <- meta[meta$Study %in% included.studies,]
+  feat.log <- feat.log[,meta$Sample_ID]
+  feat.count <- feat.count[,meta$Sample_ID]
+  
+  # iterate over repetitions
+  label <- recode(meta$Group, 'CTR'=-1, 'CRC'=1, 'CD'=1)
+  names(label) <- meta$Sample_ID
+  if (test %in% c('lm', 'limma', 'wilcoxon')){
+    p.val <- SIMBA:::run.test(data=feat.log, label=label, 
+                          test=test, conf=NULL)
+  } else {
+    p.val <- SIMBA:::run.test(data=feat.count, label=label, 
+                          test=test, conf=NULL)
+  }
+  return(p.val)
 }
 
-# updated tests 
-tests <- c('limma','limma_conf',
-           'lm','lme_conf',
-           'wilcoxon','wilcoxon_conf',
-           'mdc-FE_conf')
+# make combinations of studies for CRC
+full.grid <- expand.grid(rep(list(0:1), length(unique(meta$Study))))
+full.grid <- full.grid[rowSums(full.grid) > 1,]
+combinations <- apply(full.grid, 1, paste, collapse='')
 
-walk(tests, ~ addAlgorithm(name = .,
-                           fun = .f_apply))
+# add jobs
+batchMap(.f, 'test'=tests, 'studies'=rep(combinations, each=length(tests)),
+         more.args=list('disease'=disease, 'simba.loc'=simba.loc))
 
-# get metadata variables
-temp <- rhdf5::h5ls(here('simulations',
-                         folder,
-                         sim.file), recursive = FALSE)
-# params <- h5read(here('simulations', folder, sim.file),
-#                  name = 'simulation_parameters')
-# bias.terms <- c(0.5, 0.75)
-# subsets <- c(50, 100, 200)
-# groups <- setdiff(temp$name, c('original_data', 'simulation_parameters'))
-# groups <- c('asa','clopidogrel','nitrate','dppiv','kspdiur','statine','antibiotics',
-#            'beta_bl','ppi','metformin','antilipidtt','antithombo','heparine',
-#            'insulin')
-groups <- c('statine','antibiotics','beta_bl','ppi','metformin','asa','dppiv')
+submitJobs()
 
-# add experiments
-limma.tests <- c('limma','limma_conf')
-ades.l <- limma.tests %>%
-  map(~ data.table::CJ(test = .,
-                       group = groups,
-                       type = c('confounder','random'),
-                       norm = c('pass','TSS.arcsin'),
-                       subsets = NA_real_)) %>%
-  set_names(limma.tests)
-wcox.tests <- c('wilcoxon','wilcoxon_conf')
-ades.w <- wcox.tests %>%
-  map(~ data.table::CJ(test = .,
-                       group = groups,
-                       type = c('confounder','random'),
-                       norm = c('pass','TSS'),
-                       subsets = NA_real_)) %>%
-  set_names(wcox.tests)
-
-lm.tests <- c('lm','lme_conf','mdc-FE_conf') 
-ades.lm <- lm.tests %>%
-  map(~ data.table::CJ(test = .,
-                       group = groups,
-                       type = c('confounder','random'),
-                       norm = c('pass','TSS.log'),
-                       subsets = NA_real_)) %>%
-  set_names(lm.tests)
-
-ades <- append(ades.l, ades.w) %>% append(ades.lm)
-ades <- ades[tests]
-
-addExperiments(algo.designs = ades, reg = reg)
-getJobPars() %>%
-  unnest_wider(algo.pars) 
+# ##############################################################################
+# to be executed manually once all jobs have finished
+if (FALSE){
+  message("collecting results")
+  temp <- getJobPars() %>% 
+    unnest_wider(job.pars)
+  result.list <- list()
+  for (i in unique(temp$studies)){
+    job.ids <- temp %>% filter(studies==i) %>% pull(job.id)
+    p.val.mat <- reduceResults(cbind, job.ids)
+    colnames(p.val.mat) <- temp %>% filter(studies==i) %>% pull(test)
+    used.studies <- unique(meta$Study)[as.logical(
+      as.numeric(strsplit(i, split='')))] %>% 
+      paste(collapse = '-')
+    result.list[[used.studies]] <- p.val.mat
+  }
+  save(result.list, here('files', paste0('all_tests_', disease, '.Rdata')))
+}
