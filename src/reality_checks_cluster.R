@@ -43,7 +43,10 @@ groups <- setdiff(groups, c('original_data', 'simulation_parameters'))
 groups <- unique(str_remove(groups, '_rep[0-9]*$'))
 
 # create a job registry
-job.registry <- here(temp.loc, 'reality_checks_registries', simulation)
+if (!dir.exists(paste0(temp.loc, 'reality_checks_registries'))){
+  dir.create(paste0(temp.loc, 'reality_checks_registries'))
+}
+job.registry <- paste0(temp.loc, 'reality_checks_registries/', simulation)
 if (!dir.exists(job.registry)){
     makeRegistry(file.dir=job.registry, work.dir=here(),
     conf.file=here('cluster_config', 'batchtools_reality_conf.R'))
