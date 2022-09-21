@@ -132,5 +132,117 @@ write.table(feat, here('data', 'otus_MilieuInterieur_16S.tsv'), sep='\t',
             quote = FALSE, col.names = TRUE, row.names = TRUE)
 
 # ##############################################################################
-# TODO
-# any other 16S datasets?
+# CRC and IBD (take only the CD subtype) datasets
+
+# CRC
+crc.meta <- list()
+crc.feat <- list()
+for (i in c('Zeller_2014', 'Feng_2015', 'Yu_2017', 'Vogtmann_2016', 
+            'Wirbel_2019', 'Thomas_2019', 'Yachida_2019')){
+  if (i=='Yachida_2019'){
+    meta <- read_tsv(paste0(data.location, 'metadata/meta_', i, '.tsv'), 
+                     col_types = cols()) %>% 
+      filter(is.na(Status)) %>% 
+      select(Sample_ID, Group) %>% 
+      mutate(Sampling_rel_to_colonoscopy='AFTER') %>% 
+      mutate(Study=i)
+  } else {
+    meta <- read_tsv(paste0(data.location, 'metadata/meta_', i, '.tsv'),
+                     col_types=cols()) %>% 
+      select(Sample_ID, Group, Sampling_rel_to_colonoscopy) %>% 
+      mutate(Study=i)
+  }
+  meta <- meta %>% filter(Group %in% c('CTR', 'CRC'))
+  
+  feat <- read.table(paste0(data.location, 
+                            'tax_profiles/mOTUs_v2.5/', i, '.motus'),
+                     sep='\t', stringsAsFactors = FALSE,
+                     check.names = FALSE, quote = '', comment.char = '',
+                     row.names = 1, header = TRUE, skip=61)
+  stopifnot(all(meta$Sample_ID %in% colnames(feat)))
+  feat <- feat[,colSums(feat) > 100]
+  meta <- meta %>% filter(Sample_ID %in% colnames(feat))
+  
+  crc.feat[[length(crc.feat)+1]] <- feat[,meta$Sample_ID]
+  crc.meta[[i]] <- meta
+  message("Finished dataset ", i)
+}
+crc.meta <- bind_rows(crc.meta)
+feat <- do.call(cbind, crc.feat)
+feat.rel <- prop.table(as.matrix(feat), 2)
+
+# prevalence filter
+prev.mat <- vapply(unique(crc.meta$Study), FUN = function(s){
+    rowMeans(feat[,crc.meta %>% filter(Study==s) %>% pull(Sample_ID)] != 0)}, 
+    FUN.VALUE = double(nrow(feat.rel)))
+f.idx <- names(which(rowSums(prev.mat > 0.05) > 2))
+feat.rel <- feat.rel[f.idx,]
+
+# save tables
+write_tsv(crc.meta, here('data', 'meta_crc.tsv'))
+write.table(feat, here('data', 'motus_crc_meta.tsv'),
+            sep='\t', quote = FALSE, row.names = TRUE, col.names = TRUE)
+write.table(feat.rel, here('data', 'motus_crc_rel_meta.tsv'),
+            sep='\t', quote = FALSE, row.names = TRUE, col.names = TRUE)
+
+
+# CD
+cd.meta <- list()
+cd.feat <- list()
+for (i in c('Lewis_2015', 'He_2017', 'metaHIT', 'HMP2', 'Franzosa_2019')){
+  meta <- read_tsv(paste0(data.location, 'metadata/meta_', i, '.tsv'),
+                   col_types=cols())
+  if (i == 'Lewis_2015'){
+    meta <- meta %>% 
+      group_by(Subject) %>% 
+      filter(Time==min(Time)) %>% 
+      ungroup()
+  } else if (i == 'metaHIT'){
+    meta <- meta %>% 
+      filter(Country=='spanish') %>% 
+      group_by(Individual_ID) %>% 
+      filter(Sampling_day==min(Sampling_day)) %>% 
+      ungroup()
+  } else if (i == 'HMP2'){
+    meta <- meta %>% 
+      mutate(Group=case_when(Group=='nonIBD'~'CTR', TRUE~Group)) %>% 
+      group_by(Individual_ID) %>% 
+      filter(Timepoint==min(Timepoint)) %>% 
+      ungroup()
+  }
+  
+  meta <- meta %>% select(Sample_ID, Group) %>% 
+    mutate(Study=i) %>% 
+    mutate(Sample_ID=make.names(Sample_ID)) %>% 
+    filter(Group %in% c('CTR', 'CD'))
+  
+  feat <- read.table(paste0(data.location, 
+                            'tax_profiles/mOTUs_v2.5/', i, '.motus'),
+                     sep='\t', stringsAsFactors = FALSE,
+                     check.names = FALSE, quote = '', comment.char = '',
+                     row.names = 1, header = TRUE, skip=61)
+  colnames(feat) <- make.names(colnames(feat))
+  feat <- feat[,colSums(feat) > 100]
+  meta <- meta %>% filter(Sample_ID %in% colnames(feat))
+
+  cd.feat[[length(cd.feat)+1]] <- feat[,meta$Sample_ID]
+  cd.meta[[i]] <- meta
+  message("Finished dataset ", i)
+}
+cd.meta <- bind_rows(cd.meta)
+feat <- do.call(cbind, cd.feat)
+feat.rel <- prop.table(as.matrix(feat), 2)
+
+# prevalence filter
+prev.mat <- vapply(unique(cd.meta$Study), FUN = function(s){
+  rowMeans(feat[,cd.meta %>% filter(Study==s) %>% pull(Sample_ID)] != 0)}, 
+  FUN.VALUE = double(nrow(feat.rel)))
+f.idx <- names(which(rowSums(prev.mat > 0.05) > 2))
+feat.rel <- feat.rel[f.idx,]
+
+# save tables
+write_tsv(cd.meta, here('data', 'meta_cd.tsv'))
+write.table(feat, here('data', 'motus_cd_meta.tsv'),
+            sep='\t', quote = FALSE, row.names = TRUE, col.names = TRUE)
+write.table(feat.rel, here('data', 'motus_cd_rel_meta.tsv'),
+            sep='\t', quote = FALSE, row.names = TRUE, col.names = TRUE)
