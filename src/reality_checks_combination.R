@@ -57,7 +57,10 @@ if (stats$defined != stats$done){
 }
 
 # intialize results folder
-res.dir <- paste0(temp.loc, 'reality_checks_results/', simulation)
+if (!dir.exists(paste0(temp.loc, 'reality_checks_results'))){
+  dir.create(paste0(temp.loc, 'reality_checks_results'))
+}
+res.dir <- paste0(temp.loc, 'reality_checks_results/', simulation, '/')
 if (!dir.exists(here(res.dir))){
   dir.create(here(res.dir))
 }
@@ -149,15 +152,15 @@ df.correlation <- df.correlation %>%
   bind_rows(tibble(ab=0, prev=0, rep=0, corr=original.data$Correlation))
 
 # save results
-write_tsv(df.auc, file = here(res.dir,'auc_all.tsv'))
-write_tsv(df.correlation, file = here(res.dir,'correlation.tsv'))
-write_tsv(df.sparsity, file = here(res.dir, 'sparsity.tsv'))
-write_tsv(df.variance, file = here(res.dir, 'variance.tsv'))
+write_tsv(df.auc, file = paste0(res.dir,'auc_all.tsv'))
+write_tsv(df.correlation, file = paste0(res.dir,'correlation.tsv'))
+write_tsv(df.sparsity, file = paste0(res.dir, 'sparsity.tsv'))
+write_tsv(df.variance, file = paste0(res.dir, 'variance.tsv'))
 
 # ##############################################################################
 # actually plot a few PCoAs?
 
-pdf(here(res.dir, 'pco_plots.pdf'),
+pdf(paste0(res.dir, 'pco_plots.pdf'),
     useDingbats = FALSE, width = 6, height = 5)
 if ('prev.scale' %in% names(sim.params)){
   for (a in seq_along(sim.params$ab.scale)){
@@ -209,7 +212,7 @@ g.auc <- df.auc %>%
     ylab('Prevalence scaling') +
     facet_grid(type~., scales = 'free', space = 'free') +
     theme(panel.grid = element_blank())
-ggsave(g.auc, filename = here(res.dir, 'auc_plot.pdf'),
+ggsave(g.auc, filename = paste0(res.dir, 'auc_plot.pdf'),
        useDingbats=FALSE, width = 9,
        height = ifelse('prev.scale' %in% names(sim.params), 10, 4))
 
@@ -234,7 +237,7 @@ g.sparsity <- df.sparsity %>%
     ylab('Prevalence scaling') +
     facet_grid(type~., scales = 'free', space = 'free') +
     theme(panel.grid = element_blank())
-ggsave(g.sparsity, filename = here(res.dir, 'sparsity_plot.pdf'),
+ggsave(g.sparsity, filename = paste0(res.dir, 'sparsity_plot.pdf'),
        useDingbats=FALSE, width = 9,
        height = ifelse('prev.scale' %in% names(sim.params), 6, 3))
 
@@ -272,7 +275,7 @@ g <- df.plot %>%
     xlab('Abundance scaling') +
     ylab('Prevalence scaling') +
     theme(panel.grid=element_blank())
-ggsave(g, filename = here(res.dir, 'variance_by_group_and_type.pdf'),
+ggsave(g, filename = paste0(res.dir, 'variance_by_group_and_type.pdf'),
        useDingbats=FALSE, width = 11,
        height = ifelse('prev.scale' %in% names(sim.params), 12, 5))
 g <- df.plot %>%
@@ -290,7 +293,7 @@ g <- df.plot %>%
     geom_text(aes(label=label), col='white') +
     xlab('Abundance scaling') +
     ylab('Prevalence scaling')
-ggsave(g, filename = here(res.dir, 'variance_by_group.pdf'),
+ggsave(g, filename = paste0(res.dir, 'variance_by_group.pdf'),
        useDingbats=FALSE, width = 11,
        height = ifelse('prev.scale' %in% names(sim.params), 9, 3))
 
@@ -309,7 +312,7 @@ g <- df.plot %>%
     scale_colour_manual(values=c('#707372', '#E40046')) +
     theme(panel.grid.minor = element_blank()) +
     facet_grid(prev~ab)
-ggsave(g, filename = here(res.dir, 'variance_scatter_plots.pdf'),
+ggsave(g, filename = paste0(res.dir, 'variance_scatter_plots.pdf'),
        useDingbats=FALSE, width = 9,
        height = ifelse('prev.scale' %in% names(sim.params), 10, 4))
 
@@ -333,6 +336,6 @@ g.effect <- df.variance %>%
     scale_colour_manual(values=c('#707372', "#307FE2")) +
     scale_alpha_manual(values=c(0.2, 0.6)) +
     theme(panel.grid.minor=element_blank())
-ggsave(g.effect, filename = here(res.dir, 'effect_size.pdf'),
+ggsave(g.effect, filename = paste0(res.dir, 'effect_size.pdf'),
        useDingbats=FALSE, width = 9,
        height = ifelse('prev.scale' %in% names(sim.params), 10, 4))
