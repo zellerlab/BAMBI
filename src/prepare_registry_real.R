@@ -42,7 +42,7 @@ meta <- read_tsv(here('data', paste0('meta_', tolower(disease),'.tsv')))
   message(disease)
   message(studies)
   if (disease=='CRC'){
-    meta <- read_tsv(here('data', 'meta_crc.tsv'))
+    meta <- read_tsv(here('data', 'meta_crc.tsv'),col_types = cols())
     feat <- read.table(here('data', 'motus_crc_rel_meta.tsv'), sep='\t',
                            stringsAsFactors = FALSE, check.names = FALSE, 
                            quote = '', comment.char = '')
@@ -51,9 +51,8 @@ meta <- read_tsv(here('data', paste0('meta_', tolower(disease),'.tsv')))
                                  stringsAsFactors = FALSE, check.names = FALSE, 
                                  quote = '', comment.char = '')
     feat.count <- as.matrix(feat.count[rownames(feat),])
-    feat.log <- log10(feat + 1e-05)
   } else if (disease=='CD'){
-    meta <- read_tsv(here('data', 'meta_cd.tsv'))
+    meta <- read_tsv(here('data', 'meta_cd.tsv'),col_types = cols())
     feat <- read.table(here('data', 'motus_cd_rel_meta.tsv'), sep='\t',
                        stringsAsFactors = FALSE, check.names = FALSE, 
                        quote = '', comment.char = '')
@@ -62,7 +61,6 @@ meta <- read_tsv(here('data', paste0('meta_', tolower(disease),'.tsv')))
                              stringsAsFactors = FALSE, check.names = FALSE, 
                              quote = '', comment.char = '')
     feat.count <- as.matrix(feat.count[rownames(feat),])
-    feat.log <- log10(feat + 1e-05)
   } else {
     stop("Unknown disease")
   }
@@ -70,19 +68,17 @@ meta <- read_tsv(here('data', paste0('meta_', tolower(disease),'.tsv')))
   studies <- as.logical(as.numeric(strsplit(studies, split = '')[[1]]))
   included.studies <- included.studies[studies]
   meta <- meta[meta$Study %in% included.studies,]
-  feat.log <- feat.log[,meta$Sample_ID]
   feat.count <- feat.count[,meta$Sample_ID]
   
   # iterate over repetitions
   label <- recode(meta$Group, 'CTR'=-1, 'CRC'=1, 'CD'=1)
   names(label) <- meta$Sample_ID
-  if (test %in% c('lm', 'limma', 'wilcoxon')){
-    p.val <- SIMBA:::run.test(data=feat.log, label=label, 
-                          test=test, conf=NULL)
-  } else {
-    p.val <- SIMBA:::run.test(data=feat.count, label=label, 
-                          test=test, conf=NULL)
+  if (test %in% c('lm', 'wilcoxon')){
+    feat.count <- SIMBA:::norm.data(feat.count, 'TSS.log', 1e-05)
+  } else if (test=='limma'){
+    feat.count <- SIMBA:::norm.data(feat.count, 'TSS.arcsin', 1e-05)
   }
+  p.val <- SIMBA:::run.test(data=feat.count, label=label, test=test, conf=NULL)
   return(p.val)
 }
 
@@ -109,9 +105,9 @@ if (FALSE){
     p.val.mat <- reduceResults(cbind, job.ids)
     colnames(p.val.mat) <- temp %>% filter(studies==i) %>% pull(test)
     used.studies <- unique(meta$Study)[as.logical(
-      as.numeric(strsplit(i, split='')))] %>% 
+      as.numeric(strsplit(i, split='')[[1]]))] %>% 
       paste(collapse = '-')
     result.list[[used.studies]] <- p.val.mat
   }
-  save(result.list, here('files', paste0('all_tests_', disease, '.Rdata')))
+  save(result.list, file=here('files', paste0('all_tests_', disease, '.Rdata')))
 }
