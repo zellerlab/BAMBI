@@ -2,6 +2,7 @@
 .Rhistory
 .Rbuildignore
 .Rproj.user/
+*.Rdata
 data/
 reality_checks
 reality_checks_registries
