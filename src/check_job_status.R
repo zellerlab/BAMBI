@@ -11,13 +11,13 @@ suppressPackageStartupMessages(library("here"))
 args <- commandArgs(trailingOnly = TRUE)
 test.dir <- args[1]
 
-reg <- here('test_results_registries', test.dir)
-
+reg <- paste0(temp.loc, 'test_results_registries/', test.dir)
+message(reg)
 if (!dir.exists(reg)) {
 	stop("Directory does not exist")
 } 
 
-loadRegistry(reg)
+suppressMessages(loadRegistry(reg))
 
 print(getStatus())
 
