@@ -6,7 +6,8 @@
 #SBATCH -o /scratch/jawirbel/simulation_benchmark/github/create_sim_%A.out
 #SBATCH -e /scratch/jawirbel/simulation_benchmark/github/create_sim_%A.err
 
-module load R/4.0.0-foss-2020a
+module load Anaconda3
+source activate /g/scb/zeller/jawirbel/software/envs/r_4.0.0
 
 cd ../
 

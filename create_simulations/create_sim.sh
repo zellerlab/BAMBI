@@ -1,11 +1,12 @@
 #!/bin/bash
 #SBATCH -A zeller
-#SBATCH -t 20:00:00
-#SBATCH --mem 3G
+#SBATCH -t 3-00:00:00
+#SBATCH --mem 32G
 #SBATCH -o /scratch/jawirbel/simulation_benchmark/github/create_sim_%A.out
 #SBATCH -e /scratch/jawirbel/simulation_benchmark/github/create_sim_%A.err
 
-module load R/4.0.0-foss-2020a
+module load Anaconda3
+source activate /g/scb/zeller/jawirbel/software/envs/r_4.0.0
 
 cd ../
 
