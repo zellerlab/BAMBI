@@ -29,7 +29,7 @@ log.file = fs::path_expand(log.file)
 #SBATCH --time=1-05:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem-per-cpu=12G
+#SBATCH --mem-per-cpu=32G
 #SBATCH --account=Zeller
 <%= if (!is.null(resources$partition)) sprintf(paste0("#SBATCH --partition='", resources$partition, "'")) %>
 <%= if (array.jobs) sprintf("#SBATCH --array=1-%i", nrow(jobs)) else "" %>
@@ -38,7 +38,8 @@ log.file = fs::path_expand(log.file)
 ## source /etc/profile
 ## module add ...
 
-module load R/4.0.0-foss-2020a
+module load Anaconda3
+source activate /g/scb/zeller/jawirbel/software/envs/r_4.0.0
 
 ## Export value of DEBUGME environemnt var to slave
 export DEBUGME=<%= Sys.getenv("DEBUGME") %>

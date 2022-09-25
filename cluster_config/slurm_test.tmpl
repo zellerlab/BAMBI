@@ -38,7 +38,8 @@ log.file = fs::path_expand(log.file)
 ## source /etc/profile
 ## module add ...
 
-module load R/4.0.0-foss-2020a
+module load Anaconda3
+source activate /g/scb/zeller/jawirbel/software/envs/r_4.0.0
 
 ## Export value of DEBUGME environemnt var to slave
 export DEBUGME=<%= Sys.getenv("DEBUGME") %>
