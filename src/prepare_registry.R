@@ -36,7 +36,11 @@ tests <- c('ANCOM', 'ANCOMBC', 'corncob', 'ZIBSeq', 'ZIBSeq-sqrt', 'DESeq2',
            'limma', 'distinct', 'ZINQ', 'KS', 'ALDEx2')
 
 # make experiment registry - might need to load pkgs here
-job.registry <- paste0(temp.loc, 'test_results_registries/', paste0(simulation, '_test'))
+if (!dir.exists(paste0(temp.loc, 'test_results_registries'))){
+  dir.create(paste0(temp.loc, 'test_results_registires'))
+}
+job.registry <- paste0(temp.loc, 'test_results_registries/', 
+                       paste0(simulation, '_test'))
 if (!dir.exists(job.registry)) {
   reg <- makeExperimentRegistry(file.dir = job.registry, 
                          work.dir = here(),

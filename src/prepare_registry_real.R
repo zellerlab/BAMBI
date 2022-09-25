@@ -97,9 +97,13 @@ submitJobs()
 # to be executed manually once all jobs have finished
 if (FALSE){
   message("collecting results")
+  loadRegistry(paste0(temp.loc,  'test_results_registries/real_data_', disease))
+  meta <- read_tsv(here('data', paste0('meta_', tolower(disease),'.tsv')),
+                   col_types=cols())
   temp <- getJobPars() %>% 
     unnest_wider(job.pars)
   result.list <- list()
+  pb <- progress::progress_bar$new(total=length(unique(temp$studies)))
   for (i in unique(temp$studies)){
     job.ids <- temp %>% filter(studies==i) %>% pull(job.id)
     p.val.mat <- reduceResults(cbind, job.ids)
@@ -108,6 +112,7 @@ if (FALSE){
       as.numeric(strsplit(i, split='')[[1]]))] %>% 
       paste(collapse = '-')
     result.list[[used.studies]] <- p.val.mat
+    pb$tick()
   }
   save(result.list, file=here('files', paste0('all_tests_', disease, '.Rdata')))
 }
