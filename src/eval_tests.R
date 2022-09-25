@@ -95,7 +95,11 @@ for (i in seq_len(nrow(parameters))){
   res <- loadResult(job.id)
   for (g in names(res)){
     for (s in names(res[[g]])){
-      eval.res <- eval.test(sim.file, g, res[[g]][[s]], alpha=0.05)
+      eval.res <- eval.test(sim.file, g, res[[g]][[s]], adjust='BH', alpha=0.05)
+      res.list[[(length(res.list)+1)]] <- eval.res %>% 
+        as_tibble() %>% mutate(group=g, subset=s) %>% 
+        mutate(job.id=job.id)
+      eval.res <- eval.test(sim.file, g, res[[g]][[s]], adjust='BY', alpha=0.05)
       res.list[[(length(res.list)+1)]] <- eval.res %>% 
         as_tibble() %>% mutate(group=g, subset=s) %>% 
         mutate(job.id=job.id)
