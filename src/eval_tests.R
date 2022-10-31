@@ -97,7 +97,7 @@ if (file.exists(fn.res)){
 message("Reducing results ...")
 pb <- progress_bar$new(total=length(unique((parameters$job.id))))
 # loop through the jobs which are done
-for (i in seq_along(unique(parameters$job.id))){
+for (i in unique(parameters$job.id)){
   res.list <- list()
   # retrieve results
   res <- loadResult(i)
@@ -109,7 +109,7 @@ for (i in seq_along(unique(parameters$job.id))){
         eval.res <- eval.test(sim.file, g, res[[g]][[s]], adjust=x, alpha=0.05)
         res.list[[(length(res.list)+1)]] <- eval.res %>% 
           as_tibble() %>% mutate(group=g, subset=s, adjust=x) %>% 
-          mutate(job.id=tmp.param$job.id)
+          mutate(job.id=i)
       }
     }
   }
