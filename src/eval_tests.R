@@ -96,6 +96,11 @@ if (file.exists(fn.res)){
 # extract result tables
 message("Reducing results ...")
 pb <- progress_bar$new(total=length(unique((parameters$job.id))))
+
+col.order <- c("rep", "auroc", "TP", "FP", "TN", "FN", "PR", "R", "FDR", 
+               "group", "subset", "job.id", "problem", "test", "norm",
+               "time.running", "mem.used", "adjust")
+
 # loop through the jobs which are done
 for (i in unique(parameters$job.id)){
   res.list <- list()
@@ -122,6 +127,7 @@ for (i in unique(parameters$job.id)){
            norm=tmp.param$norm[1],
            time.running=tmp.param$time.running[1],
            mem.used=tmp.param$mem.used[1])
+  tmp <- tmp[,col.order]
   # save
   if (!file.exists(fn.res)){
     write_tsv(tmp, file = fn.res)
