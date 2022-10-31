@@ -73,47 +73,55 @@ if (!is.na(test)){
   fn.res <- here('test_results', paste0(simulation, '.tsv'))
 }
 
+# extend for the different adjustments
+parameters <- parameters %>% 
+  select(job.id, done.bool, test, norm, time.running, mem.used, problem) %>% 
+  mutate(adjust1='none', adjust2='BH', adjust3='BY') %>% 
+  pivot_longer(cols=c(adjust1, adjust2, adjust3),
+               names_to = 'name', values_to = 'adjust') %>% 
+  select(-name) %>% 
+  mutate(eval=paste0(job.id, '-', adjust)) %>% 
+  filter(done.bool)
+
 # check if some things have been evaluated before
 if (file.exists(fn.res)){
-  temp.res <- read_tsv(fn.res)
+  temp.res <- read_tsv(fn.res) %>% 
+    mutate(eval=paste0(job.id, '-', adjust))
   parameters <- parameters %>% 
-    filter(!job.id %in% temp.res$job.id)
+    filter(!eval %in% temp.res$eval)
   message('Initial results already exists! Picking up where we left...')
+  message('Number of missing evals: ', nrow(parameters))
 }
 
 # extract result tables
 message("Reducing results ...")
-pb <- progress_bar$new(total=nrow(parameters))
+pb <- progress_bar$new(total=length(unique((parameters$job.id))))
 # loop through the jobs which are done
-for (i in seq_len(nrow(parameters))){
+for (i in seq_along(unique(parameters$job.id))){
   res.list <- list()
-  job.id <- parameters$job.id[i]
-  if (!parameters$done.bool[i]){
-    next()
-  }
   # retrieve results
-  res <- loadResult(job.id)
+  res <- loadResult(i)
+  tmp.param <- parameters %>% 
+    filter(job.id==i)
   for (g in names(res)){
     for (s in names(res[[g]])){
-      eval.res <- eval.test(sim.file, g, res[[g]][[s]], adjust='BH', alpha=0.05)
-      res.list[[(length(res.list)+1)]] <- eval.res %>% 
-        as_tibble() %>% mutate(group=g, subset=s) %>% 
-        mutate(job.id=job.id)
-      eval.res <- eval.test(sim.file, g, res[[g]][[s]], adjust='BY', alpha=0.05)
-      res.list[[(length(res.list)+1)]] <- eval.res %>% 
-        as_tibble() %>% mutate(group=g, subset=s) %>% 
-        mutate(job.id=job.id)
+      for (x in tmp.param$adjust){
+        eval.res <- eval.test(sim.file, g, res[[g]][[s]], adjust=x, alpha=0.05)
+        res.list[[(length(res.list)+1)]] <- eval.res %>% 
+          as_tibble() %>% mutate(group=g, subset=s, adjust=x) %>% 
+          mutate(job.id=tmp.param$job.id)
+      }
     }
   }
   res.list <- bind_rows(res.list)
   
   # bring into right shape
   tmp <- res.list %>% 
-    mutate(problem=parameters$problem[i],
-           test=parameters$test[i],
-           norm=parameters$norm[i],
-           time.running=parameters$time.running[i],
-           mem.used=parameters$mem.used[i])
+    mutate(problem=tmp.param$problem[1],
+           test=tmp.param$test[1],
+           norm=tmp.param$norm[1],
+           time.running=tmp.param$time.running[1],
+           mem.used=tmp.param$mem.used[1])
   # save
   if (!file.exists(fn.res)){
     write_tsv(tmp, file = fn.res)
