@@ -21,8 +21,10 @@ feat.zeevi.kegg <- read.table(fn.feat, sep='\t', stringsAsFactors = FALSE,
 # transform KEGG to integer values
 feat.zeevi.kegg <- round(feat.zeevi.kegg)
 feat.zeevi.kegg[] <- lapply(feat.zeevi.kegg, as.integer)
+feat.zeevi.kegg <- feat.zeevi.kegg[-which(rownames(feat.zeevi.kegg) == '-1'),]
+feat.zeevi.kegg <- feat.zeevi.kegg[,-which(colSums(feat.zeevi.kegg)< 250000)]
 fn.meta <- here('data', 'meta_Zeevi_2014.tsv')
-meta.zeevi <- read_tsv(fn.meta) %>%
+meta.zeevi <- read_tsv(fn.meta, col_types = cols()) %>%
   filter(!is.na(Sample_ID)) %>%
   as.data.frame()
 rownames(meta.zeevi) <- meta.zeevi$Sample_ID
@@ -34,7 +36,7 @@ feat.xie <- read.table(fn.feat, sep='\t', stringsAsFactors = FALSE,
                        check.names = FALSE, quote = '', comment.char = '',
                        row.names = 1, header = TRUE)
 fn.meta <- here('data', 'meta_Xie_2016.tsv')
-meta.xie <- read_tsv(fn.meta) %>%
+meta.xie <- read_tsv(fn.meta, col_types = cols()) %>%
   filter(!is.na(Sample_ID)) %>%
   as.data.frame()
 rownames(meta.xie) <- meta.xie$Sample_ID
@@ -46,7 +48,7 @@ feat.goodrich <- read.table(fn.feat, sep='\t', stringsAsFactors = FALSE,
                             check.names = FALSE, quote = '', comment.char = '',
                             row.names = 1, header = TRUE)
 fn.meta <- here('data', 'meta_Goodrich_2014.tsv')
-meta.goodrich <- read_tsv(fn.meta) %>%
+meta.goodrich <- read_tsv(fn.meta, col_types = cols()) %>%
   filter(!is.na(Sample_ID)) %>%
   filter(DiseaseState != 'OB') %>% 
   select(Sample_ID, age, body_mass_index) %>% 
@@ -62,7 +64,7 @@ feat.schirmer <- read.table(fn.feat, sep='\t', stringsAsFactors = FALSE,
                             check.names = FALSE, quote = '', comment.char = '',
                             row.names = 1, header = TRUE)
 fn.meta <- here('data', 'meta_Schirmer_2016.tsv')
-meta.schirmer <- read_tsv(fn.meta) %>%
+meta.schirmer <- read_tsv(fn.meta, col_types = cols()) %>%
   filter(!is.na(Sample_ID)) %>%
   as.data.frame()
 rownames(meta.schirmer) <- meta.schirmer$Sample_ID
@@ -76,7 +78,7 @@ feat.mi.wgs <- read.table(fn.feat, sep='\t', stringsAsFactors = FALSE,
                        check.names = FALSE, quote = '', comment.char = '',
                        row.names = 1, header = TRUE)
 fn.meta <- here('data', 'meta_MilieuInterieur_WGS.tsv')
-meta.mi.wgs <- read_tsv(fn.meta) %>%
+meta.mi.wgs <- read_tsv(fn.meta, col_types = cols()) %>%
   filter(!is.na(Sample_ID)) %>%
   as.data.frame()
 rownames(meta.mi.wgs) <- meta.mi.wgs$Sample_ID
@@ -86,7 +88,7 @@ feat.mi.16S <- read.table(fn.feat, sep='\t', stringsAsFactors = FALSE,
                           check.names = FALSE, quote = '', comment.char = '',
                           row.names = 1, header = TRUE)
 fn.meta <- here('data', 'meta_MilieuInterieur_16S.tsv')
-meta.mi.16s <- read_tsv(fn.meta) %>%
+meta.mi.16s <- read_tsv(fn.meta, col_types = cols()) %>%
   filter(!is.na(Sample_ID)) %>%
   as.data.frame()
 rownames(meta.mi.16s) <- meta.mi.16s$Sample_ID
