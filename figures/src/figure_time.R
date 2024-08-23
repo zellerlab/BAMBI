@@ -11,12 +11,12 @@ library("ggembl")
 library("yaml")
 
 reg <- here('test_results_registries', 'testing_time')
-fn.time <- here('files', 'time_measurements.tsv')
+fn.time <- here('files', 'time_measurements_full.tsv')
 
 if (file.exists(fn.time)){
-  df.plot <- read_tsv(fn.time)
+  df.plot <- read_tsv(fn.time, col_types = cols())
 } else if (dir.exists(reg)){
-  loadRegistry(reg)
+  loadRegistry(reg, writeable = TRUE)
   
   temp <- getJobTable() %>% 
     as_tibble()
@@ -40,19 +40,19 @@ if (file.exists(fn.time)){
   params <- yaml.load_file(here('create_simulations', "parameters.yaml"))
   reg <- makeExperimentRegistry(file.dir = reg, 
                                 work.dir = here(),
-                                conf.file = here('cluster_config',
-                                                 'batchtools_test_conf.R'),
+                                # conf.file = here('cluster_config',
+                                                 # 'batchtools_test_conf.R'),
                                 make.default = TRUE) 
-  sim.file <- here('simulations', 'resampling', 'sim_all.h5')
+  sim.file <- here('simulations', 'resampling', 'sim_Zeevi_WGS_all.h5')
   stopifnot(file.exists(sim.file))
   addProblem(name = 'time',
              data = sim.file,
              fun = function(data, job) data,
              reg = reg)
   tests <- c('ANCOM', 'ANCOM_old', 'ANCOMBC', 'corncob', 'ZIBSeq', 
-             'ZIBSeq-sqrt', 'metagenomeSeq', 'metagenomeSeq2', 'ZINQ',
+             'metagenomeSeq', 'metagenomeSeq2', 'ZINQ',
              'DESeq2', 'edgeR', 'ALDEx2', 'distinct', 'limma', 'KS', 'lm',
-             'wilcoxon')
+             'wilcoxon', 'LinDA', 'fastANCOM', 'ZicoSeq', 't-test')
   # add algorithms (tests)
   .f_apply <- function(data, job, instance, group, subsets, norm, test, ...){
     apply.test(sim.location = data, group=group, 
@@ -71,6 +71,9 @@ if (file.exists(fn.time)){
     set_names(tests)
   addExperiments(algo.designs = ades, reg = reg)
   submitJobs()
+  # getJobTable() %>% 
+  #   filter(job.id %in% findNotDone()$job.id) %>% 
+  #   pull(algorithm) %>% table
   
   # once it is finished
   temp <- getJobTable() %>% 
@@ -89,7 +92,7 @@ if (file.exists(fn.time)){
       message("\t", df.missing$algorithm[a], ':', df.missing$n[a])
     }
   }
-  df.plot <- temp %>% select(-c(prob.pars, resources))
+  df.plot <- temp %>% dplyr::select(-c(prob.pars, resources))
   write_tsv(df.plot, fn.time)
   
 }
@@ -141,22 +144,3 @@ df.plot %>%
   select(algorithm_p, time.running) %>% 
   mutate(min=time.running/60) %>% 
   arrange(time.running)
-
-g2 <- g +
-    coord_cartesian(ylim=c(0, 10))
-ggsave(g, filename = here('figures', 'figure_vanilla', 'time_reqs_small.pdf'),
-       width = 80, height = 80, units = 'mm', useDingbats=FALSE)
-
-# g <- df.plot %>% 
-#   group_by(algorithm_p) %>% 
-#   summarise(m=median(mem.used, na.rm=TRUE)) %>% 
-#   # mutate(algorithm=factor(algorithm, levels = names(test.colours))) %>% 
-#   ggplot(aes(x=algorithm_p, y=m, fill=algorithm_p)) + 
-#     geom_bar(stat='identity') + 
-#     # scale_fill_manual(values=test.colours, name='Algorithm', guide=FALSE) +
-#     xlab("") + 
-#     ylab("Median memory usage [Mb]") + 
-#     theme_publication() + 
-#     theme(axis.text.x = element_text(angle=45, hjust=1))
-# ggsave(g, filename = here('figures', 'figure_vanilla', 'mem_reqs.pdf'),
-#        width = 100, height = 80, units = 'mm', useDingbats=FALSE)
