@@ -137,22 +137,13 @@ write.table(feat, here('data', 'otus_MilieuInterieur_16S.tsv'), sep='\t',
 # CRC
 crc.meta <- list()
 crc.feat <- list()
-for (i in c('Zeller_2014', 'Feng_2015', 'Yu_2017', 'Vogtmann_2016', 
-            'Wirbel_2019', 'Thomas_2019', 'Yachida_2019')){
-  if (i=='Yachida_2019'){
-    meta <- read_tsv(paste0(data.location, 'metadata/meta_', i, '.tsv'), 
-                     col_types = cols()) %>% 
-      filter(is.na(Status)) %>% 
-      select(Sample_ID, Group) %>% 
-      mutate(Sampling_rel_to_colonoscopy='AFTER') %>% 
-      mutate(Study=i)
-  } else {
-    meta <- read_tsv(paste0(data.location, 'metadata/meta_', i, '.tsv'),
-                     col_types=cols()) %>% 
-      select(Sample_ID, Group, Sampling_rel_to_colonoscopy) %>% 
-      mutate(Study=i)
-  }
-  meta <- meta %>% filter(Group %in% c('CTR', 'CRC'))
+for (i in c('Zeller_2014', 'Feng_2015', 'Yu_2017', 
+            'Vogtmann_2016', 'Wirbel_2019')){
+  meta <- read_tsv(paste0(data.location, 'metadata/meta_', i, '.tsv'),
+                   col_types=cols()) %>% 
+    select(Sample_ID, Group, Sampling_rel_to_colonoscopy) %>% 
+    mutate(Study=i) %>% 
+    filter(Group %in% c('CTR', 'CRC'))
   
   feat <- read.table(paste0(data.location, 
                             'tax_profiles/mOTUs_v2.5/', i, '.motus'),
@@ -190,7 +181,7 @@ write.table(feat.rel, here('data', 'motus_crc_rel_meta.tsv'),
 cd.meta <- list()
 cd.feat <- list()
 for (i in c('Lewis_2015', 'He_2017', 'metaHIT', 'HMP2', 'Franzosa_2019')){
-  meta <- read_tsv(paste0(data.location, 'metadata/meta_', i, '.tsv'),
+  meta <- read_tsv(paste0(temp.loc, '/metadata/meta_', i, '.tsv'),
                    col_types=cols())
   if (i == 'Lewis_2015'){
     meta <- meta %>% 
@@ -216,11 +207,11 @@ for (i in c('Lewis_2015', 'He_2017', 'metaHIT', 'HMP2', 'Franzosa_2019')){
     mutate(Sample_ID=make.names(Sample_ID)) %>% 
     filter(Group %in% c('CTR', 'CD'))
   
-  feat <- read.table(paste0(data.location, 
-                            'tax_profiles/mOTUs_v2.5/', i, '.motus'),
+  feat <- read.table(paste0(temp.loc, 
+                            '/motus/', i, '_motus.tsv'),
                      sep='\t', stringsAsFactors = FALSE,
                      check.names = FALSE, quote = '', comment.char = '',
-                     row.names = 1, header = TRUE, skip=61)
+                     row.names = 1, header = TRUE)
   colnames(feat) <- make.names(colnames(feat))
   feat <- feat[,colSums(feat) > 100]
   meta <- meta %>% filter(Sample_ID %in% colnames(feat))
@@ -233,6 +224,23 @@ cd.meta <- bind_rows(cd.meta)
 feat <- do.call(cbind, cd.feat)
 feat.rel <- prop.table(as.matrix(feat), 2)
 
+# also genus level
+tax.info <- read_tsv(here('data', 'motus_taxonomy.tsv'))
+tax.info <- tax.info %>% 
+  filter(!str_detect(family, '^NA'))
+bins.unique <- unique(tax.info$genus)
+feat.genus <- matrix(NA, nrow=length(bins.unique), ncol=ncol(feat),
+                     dimnames=list(bins.unique, colnames(feat)))
+pb <- progress_bar$new(total=length(bins.unique))
+feat.temp <- feat
+rownames(feat.temp) <- str_extract(rownames(feat), '((ref|meta)_mOTU_v25_[0-9]{5}|^-1$)')
+for (x in bins.unique){
+  feat.genus[x,] <- colSums(feat.temp[tax.info %>% 
+                                      filter(genus==x) %>% 
+                                      pull(mOTU_ID),,drop=FALSE])
+  pb$tick()
+}
+feat.genus <- rbind(feat.genus, feat.temp['-1',])
 # prevalence filter
 prev.mat <- vapply(unique(cd.meta$Study), FUN = function(s){
   rowMeans(feat[,cd.meta %>% filter(Study==s) %>% pull(Sample_ID)] != 0)}, 
@@ -240,9 +248,17 @@ prev.mat <- vapply(unique(cd.meta$Study), FUN = function(s){
 f.idx <- names(which(rowSums(prev.mat > 0.05) > 2))
 feat.rel <- feat.rel[f.idx,]
 
+prev.mat <- vapply(unique(cd.meta$Study), FUN = function(s){
+  rowMeans(feat.genus[,cd.meta %>% filter(Study==s) %>% pull(Sample_ID)] != 0)}, 
+  FUN.VALUE = double(nrow(feat.genus)))
+f.idx <- names(which(rowSums(prev.mat > 0.05) > 2))
+feat.genus <- feat.genus[f.idx,]
+
 # save tables
 write_tsv(cd.meta, here('data', 'meta_cd.tsv'))
 write.table(feat, here('data', 'motus_cd_meta.tsv'),
             sep='\t', quote = FALSE, row.names = TRUE, col.names = TRUE)
 write.table(feat.rel, here('data', 'motus_cd_rel_meta.tsv'),
+            sep='\t', quote = FALSE, row.names = TRUE, col.names = TRUE)
+write.table(feat.genus, here('data', 'motus_cd_genus.tsv'),
             sep='\t', quote = FALSE, row.names = TRUE, col.names = TRUE)
