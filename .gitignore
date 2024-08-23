@@ -4,12 +4,15 @@
 .Rproj.user/
 *.Rdata
 data/
+files/
 reality_checks
 reality_checks_registries
 test_results
 test_results_registries
 simulations
 figures/figure_*
+figures/old/
+figures/misc/
 renv/binary/
 renv/cache/
 renv/mran/
