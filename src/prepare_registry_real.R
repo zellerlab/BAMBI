@@ -42,7 +42,8 @@ meta <- read_tsv(here('data', paste0('meta_', tolower(disease),'.tsv')))
   message(disease)
   message(studies)
   if (disease=='CRC'){
-    meta <- read_tsv(here('data', 'meta_crc.tsv'),col_types = cols())
+    meta <- read_tsv(here('data', 'meta_crc.tsv'),col_types = cols()) %>% 
+      filter(!Study %in% c('Thomas_2019', 'Yachida_2019'))
     feat <- read.table(here('data', 'motus_crc_rel_meta.tsv'), sep='\t',
                            stringsAsFactors = FALSE, check.names = FALSE, 
                            quote = '', comment.char = '')
@@ -84,7 +85,7 @@ meta <- read_tsv(here('data', paste0('meta_', tolower(disease),'.tsv')))
 
 # make combinations of studies for CRC
 full.grid <- expand.grid(rep(list(0:1), length(unique(meta$Study))))
-full.grid <- full.grid[rowSums(full.grid) > 1,]
+full.grid <- full.grid[rowSums(full.grid) > 0,]
 combinations <- apply(full.grid, 1, paste, collapse='')
 
 # add jobs
