@@ -72,9 +72,26 @@ meta.schirmer$Individual_ID <- meta.schirmer$Sample_ID
 meta.schirmer$Timepoint <- 0
 
 
+# ##############################################################################
+# HMP
+fn.meta <- list.files(here('data'), pattern='meta_HMP_', full.names = TRUE)
+meta.all <- map(fn.meta, read_tsv)
+names(meta.all) <- str_remove(fn.meta, '.*HMP_') %>% str_remove('.tsv')
+fn.feat <- list.files(here('data'), pattern='otus_HMP_', full.names = TRUE)
+feat.all <- map(fn.meta, .f = function(x){
+  read.table(x, sep='\t', stringsAsFactors = FALSE, quote = '', 
+             comment.char = '', header = TRUE, row.names = 1)})
+names(feat.all) <- str_remove(fn.feat, '.*HMP_') %>% str_remove('.tsv')
+
+
 dataset.list <- list(
   'Zeevi_WGS'=list('feat'=feat.zeevi, 'meta'=meta.zeevi),
   'Schirmer_WGS'=list('feat'=feat.schirmer, 'meta'=meta.schirmer),
   'TwinsUK_WGS'=list('feat'=feat.xie, 'meta'=meta.xie),
   'TwinsUK_16S'=list('feat'=feat.goodrich, 'meta'=meta.goodrich),
-  'Zeevi_KEGG'=list('feat'=feat.zeevi.kegg, 'meta'=meta.zeevi))
+  'Zeevi_KEGG'=list('feat'=feat.zeevi.kegg, 'meta'=meta.zeevi),
+  'HMP_airways'=list('feat'=feat.all$airways, 'meta'=meta.all$airways),
+  'HMP_saliva'=list('feat'=feat.all$saliva, 'meta'=meta.all$saliva),
+  'HMP_skin'=list('feat'=feat.all$skin, 'meta'=meta.all$skin),
+  'HMP_stool'=list('feat'=feat.all$stool, 'meta'=meta.all$stool),
+  'HMP_vagina'=list('feat'=feat.all$vagina, 'meta'=meta.all$vagina))
