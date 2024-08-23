@@ -110,5 +110,5 @@ g <- df.res.all %>%
     facet_grid(adjust~name, scales = 'free_y') + 
     theme_presentation(panel.grid = 'major_y')
     
-ggsave(g, filename = here('figures', 'figure_comp', 'all_measures_missing_2.pdf'),
+ggsave(g, filename = here('figures', 'figure_comp', 'all_measures.pdf'),
        width = 5, height = 4, useDingbats=FALSE)
