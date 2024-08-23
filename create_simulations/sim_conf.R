@@ -127,6 +127,7 @@ for (i in combinations){
 # Artificial confounder
 # simulate and add both sets of test indices
 conf.feat.prop <- c(0.05, 0.1, 0.2, 0.5)
+datasets <- names(dataset.list)[str_detect(names(dataset.list), 'WGS')]
 for (cfp in conf.feat.prop){
   for (i in names(dataset.list)){
       simulation <- paste0(temp.loc, 'sim_artificial_conf_', cfp, '_', i, '.h5')
@@ -167,7 +168,7 @@ for (cfp in conf.feat.prop){
                         subsets = c(50, 100, 200, 400),
                         repetitions = 50,
                         strat.scheme = 'confounder',
-                        bias=c(0.5, 0.6, 0.7, 0.8, 0.9))
+                        bias=c(0.5, 0.6, 0.7, 0.8, 0.85, 0.9))
       
       # move to permanent place
       file.move(simulation, here('simulations', 'conf_sim'))
