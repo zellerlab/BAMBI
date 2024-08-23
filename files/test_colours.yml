@@ -2,6 +2,8 @@
 
 # generalized linear models
 lm: "#54585A"
+LDM: '#BCA882'
+LinDA: '#AF8CAD'
 
 # RNASeq models
 limma: "#9FA3CD"
@@ -14,19 +16,21 @@ ALDEx2: "#A66AE6"
 
 ANCOM: "#F3A1A1"
 ANCOMBC: "#FF5656"
+fastANCOM: '#FA63B1'
 
 # Microbiome-specific models
 corncob: "#E5920C"
 ZIBSeq: "#A0522D"
 ZINQ: "#FE8116"
-metagenomeSeq: "#FFCF07"
-metagenomeSeq2: "#FFCF07"
+metagenomeSeq: "#F2D76A"
+metagenomeSeq2: "#FFCF07" 
+ZicoSeq: '#B70B66'
 
 # non-parameteric models
 wilcoxon: "#228B22"
 distinct: "#56B782"
 KS: "#7FDB45"
-
+t-test: "#009B99"
 
 
 
